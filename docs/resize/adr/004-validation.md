@@ -1,6 +1,7 @@
 # ADR 004: Independent validation and evidence
 
-Status: Implemented; driver qualification is pending.
+Status: Implemented; the specified driver suite passed in a VM. Other release
+qualification remains open. See [qualification](../qualification.md).
 
 Use three views: an external byte/namespace model, the C exfatprogs checker, and
 a Python on-disk reader. The reader does not import the resize parser or call

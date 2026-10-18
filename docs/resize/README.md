@@ -1,9 +1,9 @@
 # Offline image resize
 
-**BLUF: This is an experimental image-only implementation. Grow, shrink, and
-undo recovery are implemented. Direct devices are disabled. Linux-driver
-qualification and a physical power-loss model are not complete. Do not use this
-version on user data.**
+**This is an experimental image-only implementation. Grow, shrink, and undo
+recovery are implemented. The specified Linux-driver suite passed in a VM.
+Physical power-loss qualification is incomplete. Direct devices are disabled.
+Do not use this version on user data.**
 
 ## Purpose and scope
 
@@ -45,7 +45,8 @@ make -j2
 ```
 
 Python 3.9 or later and shared libraries are required for the CLI. The
-qualification runners need Python 3.11 or later. This environment uses 3.12.
+qualification runners need Python 3.11 or later. Each report records its Python
+version.
 The host uses only the Python standard library. `fsck.exfat` is a required runtime dependency. A source
 build selects the checker in the same checkout. An installed command selects
 `fsck.exfat` from `PATH`. `EXFAT_RESIZE_FSCK` can select a specific checker.
@@ -227,8 +228,15 @@ reordered device caches, or storage that lies about fsync completion. Corrupt
 recovery data causes a stop. A hostile user who can change both the image and
 journal is outside the integrity model.
 
-The Linux-driver suite is supplied but was not run in this container. The
-larger-image campaign uses 128 MiB sources and targets of 80 or 192 MiB; it
+The Linux-driver suite passed in a VM with ten seeds and 5,000 real file-workload
+iterations per seed. It checked grow, shrink, content, metadata, target geometry,
+fsck, read-only mounts, and use of added capacity. This result covers one kernel,
+512-byte sectors, 4096-byte clusters, and 32–96 MiB filesystems. See
+[qualification](qualification.md) for the source identity and reached counts.
+This result does not prove physical power-loss resistance or satisfy other
+open release criteria.
+
+The larger-image campaign uses 128 MiB sources and targets of 80 or 192 MiB; it
 samples 160 reached fault scenarios and does not represent hardware testing. Direct
 devices remain disabled. Broad vendor-layout, very-large-image, storage-exhaustion,
 and hardware qualification remain open. See the current qualification record;

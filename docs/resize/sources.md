@@ -62,20 +62,22 @@ exfatprogs checker do not call those primitives. The fixture serializer imports
 some reader helpers for base geometry and checksums. This shared test code is
 explicit. It limits the independence of fixture construction from the Python
 reader. The separate C checker and external logical-byte model supply additional
-checks. Linux-driver tests are still required for release.
+checks. Linux-driver tests are also required for release. The specified driver
+suite passed in a VM; see [qualification](qualification.md) for its scope. Other
+release criteria remain open.
 
 ## Cloud setup
 
-The install script and task-start instructions were saved as an environment
-configuration draft. The saved install script was executed successfully on this
-machine. No service needs startup. The script enables experimental resize and
-builds the existing checkout. It can use the verified Debian tools retained
-under `/workspace/toolchain`.
+The earlier cloud task saved its install script and task-start instructions as
+an environment configuration draft. The install script ran successfully there.
+No service needs startup. The script enables experimental resize and builds
+the existing checkout. It can use the verified Debian tools retained under
+`/workspace/toolchain` in that environment.
 
-The system root is read-only. The local setup extracted signed Debian packages
-into a private writable toolchain. The package index signatures were checked
-with the Debian archive keyring. No signature check was disabled. A normal
-Debian or Ubuntu machine can use the package command in the guide.
+That cloud system root was read-only. Its local setup extracted signed Debian
+packages into a private writable toolchain. The package index signatures were
+checked with the Debian archive keyring. No signature check was disabled. The
+later VM qualification used the normal Debian package command in the guide.
 
 The configuration draft has not been published. Review and save the draft in
 the environment settings, then publish it to activate it. Restoration of these
