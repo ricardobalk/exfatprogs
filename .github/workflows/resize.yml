@@ -22,7 +22,6 @@ jobs:
     timeout-minutes: 45
     env:
       MODEL_SEEDS: ${{ (github.event_name == 'schedule' || inputs.full) && '1000' || '28' }}
-      RESIZE_TEST_OUTPUT: ${{ runner.temp }}/resize-test-output
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,23 +32,23 @@ jobs:
         run: ./autogen.sh && ./configure --enable-tests --enable-experimental-resize && make -j2
       - name: Existing regressions with checked exit status
         run: |
-          mkdir -p "$RESIZE_TEST_OUTPUT"
-          make -C lib check 2>&1 | tee "$RESIZE_TEST_OUTPUT/lib-check.log"
-          python3 resize/tests/regressions.py --output "$RESIZE_TEST_OUTPUT/upstream"
+          mkdir -p "$RUNNER_TEMP/resize-test-output"
+          make -C lib check 2>&1 | tee "$RUNNER_TEMP/resize-test-output/lib-check.log"
+          python3 resize/tests/regressions.py --output "$RUNNER_TEMP/resize-test-output/upstream"
       - name: Check combined cancellation, commit error, and interrupted undo
-        run: python3 resize/tests/cancel_commit.py --output "$RESIZE_TEST_OUTPUT/compound-cancel"
+        run: python3 resize/tests/cancel_commit.py --output "$RUNNER_TEMP/resize-test-output/compound-cancel"
       - name: Model images and complete small-fixture fault sweep
         run: |
           python3 resize/tests/run.py --seeds "$MODEL_SEEDS" --iterations 5000 \
-            --jobs 2 --faults --output "$RESIZE_TEST_OUTPUT/images"
+            --jobs 2 --faults --output "$RUNNER_TEMP/resize-test-output/images"
       - name: Reject partitioned and MBR hybrid images before writes
-        run: python3 resize/tests/container.py --output "$RESIZE_TEST_OUTPUT/containers"
+        run: python3 resize/tests/container.py --output "$RUNNER_TEMP/resize-test-output/containers"
       - name: Check inactive FAT entries and reader counterexamples
-        run: python3 resize/tests/nofat.py --output "$RESIZE_TEST_OUTPUT/inactive-fat"
+        run: python3 resize/tests/nofat.py --output "$RUNNER_TEMP/resize-test-output/inactive-fat"
       - name: Deliver actual Unix cancellation signals
-        run: python3 resize/tests/signals.py --output "$RESIZE_TEST_OUTPUT/signals"
+        run: python3 resize/tests/signals.py --output "$RUNNER_TEMP/resize-test-output/signals"
       - name: Sample faults on larger real images
-        run: python3 resize/tests/large_faults.py --output "$RESIZE_TEST_OUTPUT/large-faults"
+        run: python3 resize/tests/large_faults.py --output "$RUNNER_TEMP/resize-test-output/large-faults"
       - name: Reproduce checker defects on the exact baseline
         shell: bash
         run: |
@@ -58,7 +57,7 @@ jobs:
           git archive 1647ed54299ae8c4343a5edf40b892307f7e6459 | tar -x -C "$baseline"
           (cd "$baseline" && ./autogen.sh && ./configure && make -j2)
           python3 resize/tests/fsck_regression.py --baseline "$baseline/fsck/fsck.exfat" \
-            --output "$RESIZE_TEST_OUTPUT/counterexamples"
+            --output "$RUNNER_TEMP/resize-test-output/counterexamples"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -68,14 +67,12 @@ jobs:
   sanitizers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      RESIZE_TEST_OUTPUT: ${{ runner.temp }}/resize-test-output
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkgconf libblkid-dev python3 xxd
       - run: ./autogen.sh && ./configure --enable-tests --enable-experimental-resize && make -j2
-      - run: python3 resize/tests/run.py --sanitize --library-only --output "$RESIZE_TEST_OUTPUT/sanitizers"
-      - run: python3 resize/tests/regressions.py --sanitize --output "$RESIZE_TEST_OUTPUT/fsck-sanitizers"
+      - run: python3 resize/tests/run.py --sanitize --library-only --output "$RUNNER_TEMP/resize-test-output/sanitizers"
+      - run: python3 resize/tests/regressions.py --sanitize --output "$RUNNER_TEMP/resize-test-output/fsck-sanitizers"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -86,8 +83,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.driver
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      RESIZE_TEST_OUTPUT: ${{ runner.temp }}/resize-test-output
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkgconf libblkid-dev python3
@@ -96,10 +91,10 @@ jobs:
       - name: Linux driver, ten seeds and 5000 real workload iterations per seed
         run: |
           sudo python3 resize/tests/driver.py --require --seeds 10 --iterations 5000 \
-            --output "$RESIZE_TEST_OUTPUT/driver"
+            --output "$RUNNER_TEMP/resize-test-output/driver"
       - name: Make driver test output readable by the artifact uploader
         if: always()
-        run: if [ -d "$RESIZE_TEST_OUTPUT" ]; then sudo chmod -R a+rX "$RESIZE_TEST_OUTPUT"; fi
+        run: if [ -d "$RUNNER_TEMP/resize-test-output" ]; then sudo chmod -R a+rX "$RUNNER_TEMP/resize-test-output"; fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:
