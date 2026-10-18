@@ -1,0 +1,175 @@
+{
+  "checker_sha256": "95218681c5fc22ba3e8419784b8d6a4dffe052ce89b9d3d3ab3df4c27ba297fe",
+  "sanitizer": false,
+  "status": "PASS",
+  "tests": [
+    {
+      "case": "tests/2tb_disk/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_bitmap/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_bitmap_size/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_dentries/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_dentries2/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_file_size/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_first_clu/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_num_chain/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bad_root/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/bs_bad_csum/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/clu_count_overflow/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/de_bad_csum/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/duplicate_clu/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/duplicated_name/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/file_invalid_clus/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/invalid_name/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/large_file_invalid_clus/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/loop_chain/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/rename_dot_entry/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/unused-dentries/exfat.img.tar.xz",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/upcase_table/0001-TableChecksum-and-upcase-table.sh",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/upcase_table/0002-FirstCluster.sh",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/upcase_table/0003-DataLength.sh",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "tests/upcase_table/0004-EntryType.sh",
+      "detection_exit": 4,
+      "final_exit": 0,
+      "repair_exit": 1,
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "detected": true,
+  "exit": 23,
+  "probe": "deliberate 123-byte leak",
+  "status": "PASS"
+}

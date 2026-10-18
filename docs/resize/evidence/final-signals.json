@@ -1,0 +1,43 @@
+{
+  "bytes": 134217728,
+  "code_commit": "d0930b752eee004e1ad47df1744148579bc23712",
+  "iterations": 5000,
+  "script_sha256": "032173ff64f300e345e47d800e22895193e4a275ad95cc0ced0458bc227d6516",
+  "seed": 81,
+  "status": "PASS",
+  "tests": [
+    {
+      "case": "journal-copy",
+      "event": "journal.preimage.write",
+      "exit": 130,
+      "last_observed_position": 1,
+      "observed_position": 1,
+      "sent_monotonic": 42870.663896355,
+      "signal": "SIGINT",
+      "state": "old",
+      "status": "PASS"
+    },
+    {
+      "case": "mutation",
+      "event": "source.write",
+      "exit": 130,
+      "last_observed_position": 140,
+      "observed_position": 136,
+      "sent_monotonic": 42871.186536287,
+      "signal": "SIGTERM",
+      "state": "old",
+      "status": "PASS"
+    },
+    {
+      "case": "recovery",
+      "event": "recovery.write",
+      "exit": 0,
+      "last_observed_position": 4,
+      "observed_position": 1,
+      "sent_monotonic": 42872.274658117,
+      "signal": "SIGTERM",
+      "state": "old",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "baseline_sha256": "2f22631d860995319d42ab65b01eac4e34f496d3c60c6d72330ecf5bea21fb6b",
+  "status": "PASS",
+  "tests": [
+    {
+      "after_exit": 0,
+      "before_exit": 0,
+      "image_sha256": "993f4c34f67c0a1535baff9708bd39b29f9cb284d0f4e09da9fa017fcd09cb42",
+      "layout": "none",
+      "status": "PASS",
+      "unchanged": true
+    },
+    {
+      "after_exit": 1,
+      "before_exit": 0,
+      "image_sha256": "ca6117edfb5550399fd422c8da7b1d2fe5ece94e25858bf59ea355a08fae224e",
+      "layout": "mbr",
+      "status": "PASS",
+      "unchanged": true
+    },
+    {
+      "after_exit": 1,
+      "before_exit": 1,
+      "image_sha256": "a25e0632a4526a04713aac6e525f6ab8c6da2d4e3dccdfe227e3e6a09c7ed9df",
+      "layout": "gpt",
+      "status": "PASS",
+      "unchanged": true
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "tests": [
+    {
+      "commit_fault_reached": true,
+      "exit": -9,
+      "host_sha256": "08562118c8bba6891fbc4def277bbe8ec1a642c50de8942ed8bf0048a314b473",
+      "recovery_exit": 3,
+      "rollback_writes_reached": 2,
+      "status": "PASS",
+      "version": "before"
+    },
+    {
+      "commit_fault_reached": true,
+      "exit": 3,
+      "host_sha256": "5fb8183066b7d0f7c95c577514c7409d75d5a5f8ddb3c5d403ea82eaa8db703f",
+      "recovery_exit": 0,
+      "rollback_writes_reached": 0,
+      "status": "PASS",
+      "version": "after"
+    },
+    {
+      "after": {
+        "concrete_state": true,
+        "exit": 3,
+        "raised": false
+      },
+      "before": {
+        "exit": null,
+        "raised": true
+      },
+      "case": "unreadable-transaction-state",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "after_exit": 0,
+  "baseline-repair": {
+    "image_sha256": "a8fabe8a634b08b40a7cc2f3bb826c1d6098a5580745e2809070a7cc148d97c5",
+    "independent_valid": false
+  },
+  "baseline_binary_sha256": "5783d9cd633f995685b5f23c7871e4b1d2c1b3e1971d483f65bae300e730ef80",
+  "baseline_commit": "1647ed54299ae8c4343a5edf40b892307f7e6459",
+  "before_exit": 4,
+  "case": "fragmented-upcase-fat-chain",
+  "fixed-repair": {
+    "image_sha256": "0408effe79fd5655a7b6503b562f1dbc73f60586d28e7ae274d1c6cb26a21fe4",
+    "independent_valid": true
+  },
+  "image_sha256": "765fe9540f7a53e0e84bd89a0e6113a9ebc3dc092afd6ecff0cbd298c1a83d63",
+  "status": "PASS"
+}

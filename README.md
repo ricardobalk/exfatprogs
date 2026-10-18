@@ -26,6 +26,13 @@ Build steps:
     make install
 ```
 
+## Experimental offline image resize
+
+An opt-in `resize.exfat` command can grow and shrink regular Linux volume
+images with an external undo journal. This component is experimental. Direct
+devices are disabled. See [the resize guide](docs/resize/README.md) for build
+flags, use, recovery, support limits, and current qualification evidence.
+
 ## Using exfatprogs
 ```
 - mkfs.exfat:

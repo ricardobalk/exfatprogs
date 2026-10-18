@@ -1,0 +1,7 @@
+{
+  "iterations": 5000,
+  "reason": "root and CAP_SYS_ADMIN are required for private loop mounts",
+  "seeds": 10,
+  "status": "NOT_RUN",
+  "tests": []
+}

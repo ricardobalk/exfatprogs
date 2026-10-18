@@ -1,0 +1,303 @@
+{
+  "actions": {
+    "execution": "NOT_RUN",
+    "reason": "No push or remote run was authorized",
+    "workflow": ".github/workflows/resize.yml"
+  },
+  "additional_groups": {
+    "driver": {
+      "committed_report": "docs/resize/evidence/driver.json",
+      "raw_report": "resize/evidence/driver/results.json",
+      "raw_report_sha256": "cd7240b2c386d525c26fe202bb464c40bf7cc62d61de5af69db87cc1fcd7ed1c",
+      "records": 0,
+      "status": "NOT_RUN"
+    },
+    "final-compound": {
+      "committed_report": "docs/resize/evidence/final-compound.json",
+      "raw_report": "resize/evidence/final-compound/results.json",
+      "raw_report_sha256": "8aa0b41fd07803e33ddb0ccef4d10c1a3622ea692dd604f4c5fddab907c6f01e",
+      "records": 3,
+      "status": "PASS"
+    },
+    "final-containers": {
+      "committed_report": "docs/resize/evidence/final-containers.json",
+      "raw_report": "resize/evidence/final-containers/results.json",
+      "raw_report_sha256": "abcc7a026704ae14d638f9c1391caafbac8a4be246b3cb001971bb835cc9bae4",
+      "records": 3,
+      "status": "PASS"
+    },
+    "final-counterexamples": {
+      "committed_report": "docs/resize/evidence/final-counterexamples.json",
+      "raw_report": "resize/evidence/final-counterexamples/results.json",
+      "raw_report_sha256": "81d4bbff640dee941dbd0eafeab5a6fe886b37b51f3cde7f32ff8baa2984b932",
+      "records": 0,
+      "status": "PASS"
+    },
+    "final-fsck-sanitizers": {
+      "committed_report": "docs/resize/evidence/final-fsck-sanitizers.json",
+      "raw_report": "resize/evidence/final-fsck-sanitizers/results.json",
+      "raw_report_sha256": "ba00b8649ae8f674c20253686d33f1977cdf45c2cc51d76e0c6ae94e725727e5",
+      "records": 24,
+      "status": "PASS"
+    },
+    "final-inactive-fat": {
+      "committed_report": "docs/resize/evidence/final-inactive-fat.json",
+      "raw_report": "resize/evidence/final-inactive-fat/results.json",
+      "raw_report_sha256": "fb762d41a24456597e281e059ee7d4bc187d4bf0a71d1b22b32e06637bdf95cd",
+      "records": 4,
+      "status": "PASS"
+    },
+    "final-large-faults": {
+      "committed_report": "docs/resize/evidence/final-large-faults.json",
+      "raw_report": "resize/evidence/final-large-faults/results.json",
+      "raw_report_sha256": "8f77098f8cd6214be671e54bfce719c0a49491df47aa7f8453eebdfebe7fc0df",
+      "records": 160,
+      "status": "PASS"
+    },
+    "final-lib": {
+      "committed_report": "docs/resize/evidence/final-lib.json",
+      "raw_report": "resize/evidence/final-lib/results.json",
+      "raw_report_sha256": "8074247a7442584dc84a9b258e2ac366edd5ad59a3b2a163780d291876d2e45f",
+      "records": 0,
+      "status": "PASS"
+    },
+    "final-native": {
+      "committed_report": "docs/resize/evidence/final-native.json",
+      "raw_report": "resize/evidence/final-native/results.json",
+      "raw_report_sha256": "60cb3a1c06dc10c1e137a87caf2c13198ba60916aa653908c72064b6a381daee",
+      "records": 11,
+      "status": "PASS"
+    },
+    "final-signals": {
+      "committed_report": "docs/resize/evidence/final-signals.json",
+      "raw_report": "resize/evidence/final-signals/results.json",
+      "raw_report_sha256": "c8e226461ea5bd4f9ed80b25d09e2a37c76b25b58a07158b6c3fd96d0f2b27e3",
+      "records": 3,
+      "status": "PASS"
+    },
+    "final-upstream": {
+      "committed_report": "docs/resize/evidence/final-upstream.json",
+      "raw_report": "resize/evidence/final-upstream/results.json",
+      "raw_report_sha256": "c91630bb3ef1f14785c8a8f651fc95285b8c2ba044fe4072cca6ee975f0f7ec4",
+      "records": 24,
+      "status": "PASS"
+    },
+    "leak-detector": {
+      "committed_report": "docs/resize/evidence/leak-detector.json",
+      "raw_report": "resize/evidence/leak-detector/results.json",
+      "raw_report_sha256": "479badf3ffe232b3e93899f51ab06b79390020077e5e8b78a74c0e53e1bd4447",
+      "records": 0,
+      "status": "PASS"
+    }
+  },
+  "base_commit": "1647ed54299ae8c4343a5edf40b892307f7e6459",
+  "binary_sha256": {
+    "fsck/fsck.exfat": "95218681c5fc22ba3e8419784b8d6a4dffe052ce89b9d3d3ab3df4c27ba297fe",
+    "mkfs/mkfs.exfat": "3e96f9ff2bad4b3c7c970f961a7fde5d5e74d93a03e1c0d0bdcfd4e4ca0206db",
+    "resize/.libs/libresize-image.so": "7737c82786cb103f764c9d43cab75568f4ddb3441002473fe16a5bf9273c3393",
+    "tune/tune.exfat": "c5f885ac07a0cbd88e4be23eecdd6069b2fe443916abe3f729868d9c74ea0981"
+  },
+  "branch": "feat/exfat-resize",
+  "clean_and_local_normalized_engine_equal": true,
+  "clean_build_and_install": {
+    "report": "docs/resize/evidence/clean-build-install.json",
+    "root": "/workspace/resize-verified-build",
+    "status": "PASS"
+  },
+  "cloud_setup": {
+    "fresh_task_local_commit_restoration": "NOT_VERIFIED",
+    "install_log": "/workspace/resize-onboarding-verified.log",
+    "install_log_sha256": "d70d8523e90c4e0f0d31db713a21cb92d0e55a4a9a4cf03bb01b894e9a0e9187",
+    "install_script_run": "PASS",
+    "published": false,
+    "status": "DRAFT_SAVED"
+  },
+  "committed_evidence_sha256": {
+    "docs/resize/evidence/clean-build-install.json": "dca57c57b08b8b47192f08ee7c7da4cf9c635f66249cc9657d293d13b67ea412",
+    "docs/resize/evidence/driver.json": "8a92c74e80eb4a93f1a5622d0cdcde0174f97e73754df943ccdd0e29ce61c584",
+    "docs/resize/evidence/final-compound.json": "2ba70d6af65dd23518366e8a0bf44e81b1fd184c128d8f50f9b58ba54c26bcbd",
+    "docs/resize/evidence/final-containers.json": "7d02651422fbf28512b54a099cdfc8e5b252842bce00bf3d150d01ae17c5d74a",
+    "docs/resize/evidence/final-counterexamples.json": "6ae486150669fda4dccec1636f84aa919314ecb56828845ba0d94e3704815672",
+    "docs/resize/evidence/final-fsck-sanitizers.json": "693397dd80f8d17ab5f17f3f7a0d7f21015a21fe2d693b79f892d60846ec7c0d",
+    "docs/resize/evidence/final-inactive-fat.json": "65ec50207efddd442f5b25c6593dbd6a88fd49fe52cf3178e543f77ef9666c20",
+    "docs/resize/evidence/final-large-faults.json": "b72368d796cfcf511bc83440a74a73d333b8b729e0d2ed111187d77e1050aaa0",
+    "docs/resize/evidence/final-lib.json": "61b64e2ed56746870a99646de45ddb22592889815c68692b4913e852933106da",
+    "docs/resize/evidence/final-native.json": "e4262a58ba6d93b22df39f1d280dd6d0bcf19bc651830d997ce39260e7de20fd",
+    "docs/resize/evidence/final-signals.json": "9388f8ff168b78df935dc000b6b1afa9185344497eb3b242c7085270b566ffb6",
+    "docs/resize/evidence/final-upstream.json": "21d538d381e222d25616dc660cf4de327cb29916f5641c7ff4088b09f93d2311",
+    "docs/resize/evidence/leak-detector.json": "1c5c77726046f6c3318350cc5452e1b17c755acb89b8e28fe557fcc71241b293",
+    "docs/resize/evidence/model-and-fault-cases.jsonl": "1950db1cfa57b347b9225aa07b6f9af14aef4bf4a4906a3495b53baca1dcc378",
+    "docs/resize/evidence/model-and-fault-run.json": "ddb813271a5cae71498697b3f2ccd5f0bc6cab49c2c8881e5763bfdbc544e193"
+  },
+  "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+  "distribution": {
+    "accidental_test_image_excluded": true,
+    "artifacts": "/workspace/resize-verified-build/exfatprogs-1.4.3.tar.{gz,xz}",
+    "checked_resize_files": 97,
+    "command": "make dist",
+    "note": "Distribution check ran before this evidence record was added. Executable sources are identical.",
+    "raw_evidence_excluded": true,
+    "status": "PASS"
+  },
+  "implementation_commit": "21b1ee59cfa56eb752857c283ff5fd59f55c8b4e",
+  "limits": [
+    "Linux driver: NOT_RUN; CAP_SYS_ADMIN and loop device nodes are unavailable. Required 10 seeds x 5000 real workload iterations remain open.",
+    "No physical power-loss or device-cache persistence model was supplied or qualified.",
+    "Direct devices, partition changes, TexFAT, and vendor allocation semantics are disabled.",
+    "Broad vendor/GUID/bad-cluster combinations, very large real images, and full storage/close-failure campaigns remain incomplete.",
+    "Formal ASD-STE100 conformity has not been independently audited.",
+    "Earlier preliminary or failed evidence is retained; it does not qualify this implementation. Negative-control failures are expected and recorded."
+  ],
+  "model": {
+    "case_records": "docs/resize/evidence/model-and-fault-cases.jsonl",
+    "geometries": [
+      [
+        512,
+        512
+      ],
+      [
+        512,
+        4096
+      ],
+      [
+        512,
+        8192
+      ],
+      [
+        512,
+        16384
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        8192
+      ],
+      [
+        4096,
+        16384
+      ]
+    ],
+    "iterations_per_seed": 5000,
+    "linux_workload_syscalls": 0,
+    "raw_results": "resize/evidence/verified-final/results.json",
+    "raw_results_sha256": "2fe06f3827015425adc2e6c62156efde90b9092ad7b271dab03329c83987faf8",
+    "resize_operations": 6000,
+    "run_metadata": "docs/resize/evidence/model-and-fault-run.json",
+    "seeds": 1000,
+    "status": "PASS",
+    "total_dictionary_iterations": 5000000
+  },
+  "native": {
+    "asan": true,
+    "c_suites": 10,
+    "leak_sanitizer": true,
+    "python_unit_tests": 11,
+    "ubsan": true
+  },
+  "normalized_engine_sha256": "aceae9dda2b15e2513cdb67098a7fbbb83a8a8a929cfc4f126ee1a853d58263d",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "recorded_utc": "2026-10-18T10:11:53.913587+00:00",
+  "release": "EXPERIMENTAL_IMAGE_ONLY",
+  "schema": 1,
+  "small_faults": {
+    "integrity_groups": 2,
+    "mode_counts": {
+      "cancel": 172,
+      "eintr": 168,
+      "eio": 190,
+      "eio-persistent": 1,
+      "enospc": 190,
+      "enospc-persistent": 1,
+      "kill": 190,
+      "short": 104
+    },
+    "reached_injection_records": 1016,
+    "status": "PASS"
+  },
+  "source_sha256": {
+    ".github/workflows/resize.yml": "cdd0e477b99a2831212b6d233def65919af10d1f59e8556e1b2fd95dcef626e5",
+    ".gitignore": "f859e2308c6f65046064f8a3cca9f5758250256136e5b39e4ea08dd7d882b490",
+    "Makefile.am": "cf229a3c5681dfbf38a7636499dca37b29fe6e3096c8e3d7246a5d639d8326fd",
+    "configure.ac": "e2eedadcc9ef3232b609b255e415b4093f504295ad59afbe68dd1cd4b49968ee",
+    "fsck/fsck.c": "59280489e5b1a74395ec29b251e7086c25036242d566cedf4cfe3502aca318f9",
+    "manpages/resize.exfat.8": "0546371b2cba189991f90f9b34470a13d0c7d8ee65e2f4dcf0a4bb3bdb04874d",
+    "resize/Makefile.am": "b9c029c1d5ca2c6d6e7ef5dc82444a1ba2030b063cb4cebc4818826fc41e8c2d",
+    "resize/bridge.c": "0798ab4d005bec1253499ed048c609622df73eeec71c33ae47dfa0cd1e3d56b5",
+    "resize/image_resize.py": "5fb8183066b7d0f7c95c577514c7409d75d5a5f8ddb3c5d403ea82eaa8db703f",
+    "resize/resize.exfat.in": "d4e87c2d5a4b04bd3d1ed3c01fe7de77f661018beacd2e97cfdefe66b85352bc",
+    "resize/tests/baselines/image-host-before-cancel-fix.py": "08562118c8bba6891fbc4def277bbe8ec1a642c50de8942ed8bf0048a314b473",
+    "resize/tests/baselines/image-host-before-container-check.py": "2f22631d860995319d42ab65b01eac4e34f496d3c60c6d72330ecf5bea21fb6b",
+    "resize/tests/baselines/reader-before.py": "b7585fcf1590c9c6bb4b191d2f430d88d25804b3ceca6066e2ecae9b801e8c5c",
+    "resize/tests/cancel_commit.py": "ba849e1f509b2384e29d99adbcd25a536e1b968ae7c560fe82585bb5633896ee",
+    "resize/tests/container.py": "810f0b63eccc2fcb14c0d73d3aae4ef47c740e42be7e895c35261b53d5817f71",
+    "resize/tests/driver.py": "bd984be60ba8ebb9260d4c2250dda1f0892d49fe5b9930955cc25ffd0e21962b",
+    "resize/tests/fixture.py": "bea02dad24e2afa83836204de70171290abd9017af3608e2d5f5658b2792b522",
+    "resize/tests/fsck_regression.py": "357066fbcb9c65da73842c9d716e2b5f20fc8c5ff251ba1941fa8aa6f67813ba",
+    "resize/tests/large_faults.py": "d89e29964e75cf35bf40e07ba56f11ed0c5fae63277b2af8e801747a89df7c8f",
+    "resize/tests/nofat.py": "42261b63529d038db02ae35e4a8056844cc9a20dbb2471e197f7ac729f55fe68",
+    "resize/tests/reader.py": "8e5ce2b97522b0f448e4324f7ed8ea2fd569af225366c0f3caa7d2f447d7013b",
+    "resize/tests/regressions.py": "3f71457046c15b4bb21404ec764942d798dbf109e1f48ec889e998cd3604d13a",
+    "resize/tests/run.py": "3a18dca51ad8d45698f982d0e70f70780f4383761ff983abe3ae55a46a1070e8",
+    "resize/tests/signals.py": "032173ff64f300e345e47d800e22895193e4a275ad95cc0ced0458bc227d6516",
+    "resize/tests/test_host.py": "efd4a7a94c7177865fe56c84fe7325cc725b6256d548218100f4cc810bd95b59",
+    "resize/vendor/LICENSE": "9c6dbc3b4c8cf17ca09d6294cffb17380c96ad6a030f1e3b4503b26f363d325d",
+    "resize/vendor/ORIGIN": "dfed81afc891df63e0d8a8c1aeaa811cc6a0f2db4d1774b2e877f3eb3e2be197",
+    "resize/vendor/docs/LIBRARY.md": "08fa45f824b6c4c7ccf646d4b9abbe085eb6307dc44ef3633deb7064b5bc2ec0",
+    "resize/vendor/docs/TRANSACTION.md": "7452558e871be3deb5da8734a01cd3215699ab72edc56a9a85315b81c086d495",
+    "resize/vendor/include/exfat_resize.h": "ec355734509ba0400aa37cd3e0525917f096bda83cdb7db9c7f214711f9fb832",
+    "resize/vendor/lib/allocation.c": "9ef36f9ecd846e40d75015f00cbad350776753e7573fd9409340ec6d5481736d",
+    "resize/vendor/lib/allocation.h": "43775378e3ca824636dd23de43ed200580f1c2ca07a7bd4c2c578a2b85c41a59",
+    "resize/vendor/lib/block_device.c": "6e514cc3611032dc8d8e4b57f5bfe51f7b25faac0b3ae29ed78d8082eb389584",
+    "resize/vendor/lib/block_device.h": "31afb830c75e595650021b2fe0bfbf8bf9c989bbd6a78a53554e8654e0a30f2f",
+    "resize/vendor/lib/boot_region.c": "9abad99d0aa8e2c11266c4fedec813eaff8086e593eeb6d56d707ba6ae7bbbe1",
+    "resize/vendor/lib/boot_region.h": "278f07740ff96037eba5ba7785e70def5f1061793df9850b48985ca639f25783",
+    "resize/vendor/lib/checked_math.c": "9b83b1e0b0e15ec4eccf88b2e591f8216fb2b7504cc9661b69f2cfdc80bcfb61",
+    "resize/vendor/lib/checked_math.h": "b97229e8bdbfda7b67ab756cc468ed2d9b6573d9db94f5e3e42baf925a21272c",
+    "resize/vendor/lib/common.h": "11c7133059799ce375843c74356fc6bf13b4ed26737e0f608d7c8865d7b2b6ef",
+    "resize/vendor/lib/directory.c": "11f642573dabf6c659ae4eb0d9fac4426a0dfadbfc3b2edbb62712aedccb873d",
+    "resize/vendor/lib/directory.h": "dd363aa21e3d951b9b1d9083f307758ec5a97b3b25d772777ecba9c5c0f90352",
+    "resize/vendor/lib/endian.c": "3cd0e7f83d9e9aaa83a3160ab1f344d95eb07b5ecea193f573cd2aa6c01366af",
+    "resize/vendor/lib/endian.h": "a827c9774a34499949a7de3e6b26de246c1e6f803810da62c24a70d260e90dd1",
+    "resize/vendor/lib/event.c": "c852b07e85fa78bd19aff1b3da9c1b62f3695e95552b88e6288199f9eac8da9b",
+    "resize/vendor/lib/event.h": "64389c9aac4ab95637ef0c3f922db64f180434f36de03653ed3d93b9b3a054ce",
+    "resize/vendor/lib/geometry.c": "849b56b57473e9857fdce38abef9dfa5a8ec917a65ff24061acd80611f6ed5e8",
+    "resize/vendor/lib/geometry.h": "cc24f8d6f5512701f0e44ec5dd6a4a8fb1c8c6e0b4c3c916d53b0e4256b243f8",
+    "resize/vendor/lib/grow.c": "935833f248f4b1aad322588768b67059dc9db75c6d0dd43baee5aeb18096ea07",
+    "resize/vendor/lib/grow.h": "f0b8496d83ebedc1d67a4c43e22b527dc5ab6211d3178836b904d2aeeda3a44f",
+    "resize/vendor/lib/resize.c": "a3d3a6617727f86e2f7371b2e7010c9ff87992ac83f2eebe2107264f0d2ea403",
+    "resize/vendor/lib/resize_internal.h": "41a43004e6add9e69af7c9ed882df8632bb654ac4aac3a364ff723982c8603a0",
+    "resize/vendor/lib/sector_adapter.c": "e3e47254f12699895c6e976f0a48effdcba328a2df80fea336ab649df3e6c80f",
+    "resize/vendor/lib/sector_adapter.h": "cccf6e30abe4ffee1cb158ec559f8a5fed1dcaf799c8ce740d828d7a5a2a4832",
+    "resize/vendor/lib/shrink.c": "d96560fe9e5cb84f034e0b84d5fbb14e971619a50e166222394133d4003be318",
+    "resize/vendor/lib/shrink.h": "3dfe0841b0fe44b9f3676ad875086a11e62dc32a9c94d5f320e8692a35803831",
+    "resize/vendor/lib/stream.c": "5ec7d03ea556af38befc0978ac9504c11bb8b58707db8eca1212125921c7441c",
+    "resize/vendor/lib/stream.h": "dba022ef64fb3aa7643d84f44481c5f891cef464ff09a096e61325bcafc2c575",
+    "resize/vendor/lib/volume.c": "b7b3760e9f9041348111e8ccc1a4a8d0b2e05c57947113c3e4fb91ea45e70cba",
+    "resize/vendor/lib/volume.h": "57d6a927c855996bd3f46af6a55c1d92e889647a2a1711f3ddd2389bd6e40346",
+    "resize/vendor/tests/library/CMakeLists.txt": "cdd2a5162d5c01b4af454d42313cc62aa3d65571aa99c1cb68e8fc3ed0eb535e",
+    "resize/vendor/tests/library/integration/api_tests.c": "cc4419286f3881d8e819e0b5bb4399f241dbf929fa2efc6d215a8f9d88035d08",
+    "resize/vendor/tests/library/integration/mechanism_tests.c": "576a56213e921d339ec941cf19f32435c998a56c9c88d3ec6929c13f0fa8a942",
+    "resize/vendor/tests/library/integration/resize_tests.c": "a467455073915e59a1f7623c554313af829ed517de9fe5e8be117db18bef542f",
+    "resize/vendor/tests/library/integration/shrink_materialization_tests.c": "21f7518a21ebf7393353391ccf5e58c78187d5c6fcdd6448ce7e19ed90ea6262",
+    "resize/vendor/tests/library/integration/shrink_tests.c": "3896e905737d3f8b031d7b40d30f04468366c61e122522f9f0c1a6ff16a37bb1",
+    "resize/vendor/tests/library/integration/shrink_transaction_tests.c": "85ee8711ce023e04ae09cc1af1d307cd1fc41e44332366f8a83e9c8ea3275abb",
+    "resize/vendor/tests/library/integration/transaction_tests.c": "714435e01cf597a583f74cdf2d33d8558a8ec66670e30718c53c4fb8bf846f03",
+    "resize/vendor/tests/library/support/exfat_fixture.c": "f69a94d6a4044c2459f52d98cc59a76f0be2ebd90227e697b8127d71f3d9e21c",
+    "resize/vendor/tests/library/support/exfat_fixture.h": "a9f6798633daa4fa6367d7e12a27fee4da075adf5c90e47e3a900e8f29945991",
+    "resize/vendor/tests/library/support/memory_block_device.c": "48b7463e2f8b785b6d85fa558925668001b5265493d7c5602b005827f39146d1",
+    "resize/vendor/tests/library/support/memory_block_device.h": "a2290c0092e8105c5b555ceaac3cd183d43b8c895265e1cbf51dcdf05c8fca09",
+    "resize/vendor/tests/library/support/shrink_fixture.c": "db243260c16605749c1846f65427daedcf44f3cef80d491da016b5f400b0bdb1",
+    "resize/vendor/tests/library/support/shrink_fixture.h": "ad3bd86c762393dc2a799f8b47e352c5972a8847dbe61f84dfb05657ff73d0fc",
+    "resize/vendor/tests/library/support/test_allocator.c": "b1db203dbcb68fce0fce15a74e5f46cf41bde73b5d402e772016d5b6e43ed028",
+    "resize/vendor/tests/library/support/test_allocator.h": "2c5c95a6252ebe93842dbd763e8ce049e18719216165beb64888eb86a5aba980",
+    "resize/vendor/tests/library/unit/boot_region_tests.c": "5daeba59dd72017e88f43f87cb94f262bb4cb5a5009c712d2a44ed15058f7ebb",
+    "resize/vendor/tests/library/unit/foundation_tests.c": "ba30e63aa97185b4c00686843120cf5b902bd82971aca2cebeb210f67eadadec",
+    "resize/vendor/tests/library/unit/geometry_tests.c": "bd5d2ddd47ce356f78787f608895a1cb3c4599bad7425c2f99812656a5b0877c"
+  },
+  "status": "PARTIAL_QUALIFICATION",
+  "test_commit": "d0930b752eee004e1ad47df1744148579bc23712"
+}
