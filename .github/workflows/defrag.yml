@@ -1,0 +1,171 @@
+name: Experimental defrag qualification
+
+on:
+  push:
+    paths:
+      - '.github/workflows/defrag.yml'
+      - 'defrag/**'
+      - 'include/**'
+      - 'lib/**'
+      - 'fsck/**'
+      - 'mkfs/**'
+      - 'dump/**'
+      - 'tests/defrag/**'
+  pull_request:
+    paths:
+      - '.github/workflows/defrag.yml'
+      - 'defrag/**'
+      - 'include/**'
+      - 'lib/**'
+      - 'fsck/**'
+      - 'mkfs/**'
+      - 'dump/**'
+      - 'tests/defrag/**'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run the complete rootless qualification program
+        type: boolean
+        default: false
+      driver:
+        description: Run the privileged disposable loop-image tests
+        type: boolean
+        default: false
+  schedule:
+    - cron: '23 3 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke (${{ matrix.compiler }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang libblkid-dev xz-utils xxd
+      - name: Run baseline and repaired smoke qualification
+        env:
+          CC: ${{ matrix.compiler }}
+        run: |
+          python3 tests/defrag/qualify.py \
+            --out "defrag-ci-smoke-${{ matrix.compiler }}"
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: defrag-smoke-${{ matrix.compiler }}
+          path: defrag-ci-smoke-${{ matrix.compiler }}/
+          retention-days: 14
+
+  sanitizers:
+    name: ASan and UBSan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libblkid-dev xz-utils xxd
+      - name: Build instrumented binaries
+        run: |
+          python3 tests/defrag/build.py --sanitize --out build-defrag-ci-sanitize
+          echo "DEFRAG_ASAN_RUNTIME=$(cc -print-file-name=libasan.so)" >> "$GITHUB_ENV"
+      - name: Run instrumented regression and image tests
+        run: |
+          mkdir defrag-ci-sanitize
+          python3 tests/defrag/regressions.py \
+            --binary build-defrag-ci-sanitize/defrag.exfat \
+            --mkfs build-defrag-ci-sanitize/mkfs.exfat \
+            --fault build-defrag-ci-sanitize/fault.so \
+            --out defrag-ci-sanitize/regressions
+          python3 tests/defrag/negative.py \
+            --build build-defrag-ci-sanitize \
+            --out defrag-ci-sanitize/negative
+          python3 tests/defrag/transaction_regressions.py \
+            --build build-defrag-ci-sanitize \
+            --out defrag-ci-sanitize/transactions
+          python3 tests/defrag/run.py \
+            --build build-defrag-ci-sanitize \
+            --cases 16 --operations 1000 \
+            --out defrag-ci-sanitize/model
+      - name: Upload sanitizer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: defrag-sanitizers
+          path: defrag-ci-sanitize/
+          retention-days: 14
+
+  full:
+    name: Full rootless qualification
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libblkid-dev xz-utils xxd
+      - name: Run complete rootless qualification
+        run: |
+          python3 tests/defrag/qualify.py --full --jobs 2 \
+            --out defrag-ci-full
+      - name: Upload full qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: defrag-full-rootless
+          path: defrag-ci-full/
+          retention-days: 30
+
+  driver:
+    name: Linux exFAT driver
+    if: github.event_name == 'workflow_dispatch' && inputs.driver
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libblkid-dev xz-utils xxd
+      - name: Build test binaries
+        run: python3 tests/defrag/build.py --out build-defrag-ci-driver
+      - name: Load the Linux exFAT driver
+        run: sudo modprobe exfat
+      - name: Run ten disposable loop-image workloads
+        run: |
+          sudo python3 tests/defrag/mounted.py \
+            --build build-defrag-ci-driver \
+            --seeds 10 --operations 5000 \
+            --out defrag-ci-driver
+      - name: Make evidence readable by the artifact service
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" defrag-ci-driver || true
+      - name: Upload driver evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: defrag-linux-driver
+          path: defrag-ci-driver/
+          retention-days: 30
