@@ -37,6 +37,7 @@ def main():
     if not args.baseline_only:
         build('defrag.exfat', ['defrag/defrag.c'])
     build('fsck.exfat', ['fsck/fsck.c', 'fsck/repair.c'])
+    build('dump.exfat', ['dump/dump.c'])
     build('mkfs.exfat', ['mkfs/mkfs.c', 'mkfs/upcase.c', 'mkfs/crc.c'],
           ['-DHAVE_BLKID', '-I'+str(args.blkid_include), '-Wl,--no-as-needed', '-Wl,-l:libblkid.so.1'])
     subprocess.run([os.environ.get('CC', 'cc'), '-O2', '-shared', '-fPIC', '-Wall', '-Wextra',
@@ -62,6 +63,12 @@ def main():
         (out/'baseline.json').write_text(__import__('json').dumps(dict(
             commit=args.base, shared_patched_sources=False,
             adaptation='add zero sector offset argument to exfat_write_checksum_sector'), indent=2) + '\n')
+    import hashlib, json, platform
+    relevant = sorted(list((root/'defrag').glob('*.c')) + list((root/'defrag').glob('*.h')) +
+                      list((root/'lib').glob('*.c')) + list((root/'include').glob('*.h')))
+    (out/'build.json').write_text(json.dumps(dict(base=args.base, compiler=subprocess.check_output([common[0],'--version'],text=True).splitlines()[0],
+        platform=platform.platform(),python=sys.version,sanitize=args.sanitize,flags=common,
+        source_sha256={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in relevant}),indent=2)+'\n')
     print(out)
 
 
