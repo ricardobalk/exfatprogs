@@ -37,10 +37,12 @@ class JunitReportTests(unittest.TestCase):
             self.assertIn('What:', failure.text)
             self.assertIn('Why:', failure.text)
             self.assertIn('Where:', failure.text)
+            self.assertIn('What the user notices:', failure.text)
             self.assertEqual(1, len(xml.findall('.//skipped')))
             text = summary.read_text()
-            self.assertIn('| What | Why | Where | If it failed |', text)
+            self.assertIn('| What | Why | Where | If it failed | What the user notices |', text)
             self.assertIn('Seeded grow and shrink image preservation', text)
+            self.assertIn('missing or corrupted personal files', text)
             self.assertEqual('layout gpt', junit_report.case_name({'layout': 'gpt'}))
 
     def test_prefers_combined_case_records(self):

@@ -52,11 +52,14 @@ not PASS and cannot support the related release claim.
 
 The `Experimental defrag qualification` GitHub Actions workflow converts every
 recorded JSON or JSONL case to JUnit XML. Each job summary first shows a short
-`What`, `Why`, `Where`, and `If it failed` table in technical English. A pinned
-test-reporter action then publishes the JUnit cases as a GitHub Check with
-per-suite totals, case names, durations, skips, and failure evidence. Repeated
-model and fault cases include their seed, geometry, fault mode, or reached
-boundary in the displayed name.
+`What`, `Why`, `Where`, `If it failed`, and `What the user notices` table in
+technical English. The last column translates the safety property into an
+everyday symptom: missing files after “optimize storage”, corrupt recordings,
+changed timestamps, an overwritten backup, or a device that no longer mounts
+the volume. A pinned test-reporter action then publishes the JUnit cases as a
+GitHub Check with per-suite totals, case names, durations, skips, and failure
+evidence. Repeated model and fault cases include their seed, geometry, fault
+mode, or reached boundary in the displayed name.
 
 The converter creates a failing `campaign completion` case when a runner
 records an incomplete or failed campaign without a failed child row. If no
