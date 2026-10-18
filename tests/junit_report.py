@@ -161,6 +161,38 @@ INTENTS = {
     },
 }
 
+USER_EFFECTS = {
+    'missing': 'A problem can reach users without a trustworthy test record explaining whether it was ever checked.',
+    'orchestration': 'A storage feature may be shipped with an untested path, so the first complete test happens on somebody\'s own files.',
+    'resize-library': 'After changing storage size, photos, downloads, apps, or recordings may disappear, open damaged, or use the wrong amount of space.',
+    'resize-host': 'A mistyped size or damaged card may be modified instead of refused, making the original files harder to recover.',
+    'resize-model': 'A USB drive, memory card, phone, or set-top box may show the new size but contain missing or corrupted personal files.',
+    'resize-faults': 'After a flat battery, power cut, unplugged cable, or forced restart, the device may say the storage is unreadable or needs formatting.',
+    'resize-large-faults': 'Large videos, offline maps, games, or TV recordings may be corrupted even when small files still look normal.',
+    'resize-fsck': 'Running repair may delete recoverable files, keep reporting the same error, or leave the storage unusable.',
+    'resize-counterexample': 'A healthy card may be reported as damaged, while repairing it can make devices reject its system metadata.',
+    'resize-container': 'The computer may lose its partition table, stop booting, or show several partitions as one broken disk.',
+    'resize-nofat': 'A device may reject a valid card or make intact photos and media appear to belong to damaged clusters.',
+    'resize-signals': 'Cancelling the operation or shutting down the computer may leave the storage unable to mount on the next start.',
+    'resize-compound': 'A power or storage error while cancelling may leave neither the old nor new size usable, even after retrying recovery.',
+    'resize-driver': 'Linux or an embedded device may fail to remount the storage, lose files, or be unable to use the newly added free space.',
+    'defrag-regressions': 'After an “optimize storage” operation, files may vanish, fail to open, or trigger a repair warning that did not exist before.',
+    'defrag-model': 'Folders may still be listed normally while a photo, document, app file, or recording contains changed bytes.',
+    'defrag-faults': 'A restart or unplug during optimization may leave the card or drive unreadable instead of safely returning to its old state.',
+    'defrag-persistence': 'A real power loss may expose delayed or half-written data and make files corrupt only after the device starts again.',
+    'defrag-publication': 'An existing backup may be overwritten, or a newly visible “optimized” copy may look complete but contain damaged data.',
+    'defrag-negative': 'The tool may alter the wrong file, linked image, or already damaged volume instead of stopping with a clear error.',
+    'defrag-transaction': 'A closed app may leave a background worker changing storage, so a later retry or repair races with unfinished work.',
+    'defrag-upstream': 'A user asking the repair tool for help may lose recoverable data or remain stuck in a repeated repair loop.',
+    'defrag-metadata': 'Files may keep their contents but suddenly have wrong dates, lose read-only/hidden flags, or appear truncated to an application.',
+    'defrag-matrix': 'Optimization may work on one card but fail only on a particular phone, camera, disk size, or nearly full volume.',
+    'defrag-driver': 'A computer, media box, or other Linux device may no longer mount the volume or play the files created before optimization.',
+}
+
+
+def described_intent(key):
+    return INTENTS[key] | {'user': USER_EFFECTS[key]}
+
 
 def load_json(path):
     try:
@@ -299,7 +331,8 @@ def case_name(row):
 def error_detail(row, intent):
     error = row.get('error', row.get('failure', row.get('reason', 'The recorded test status was not PASS.')))
     return (f'What: {intent["what"]}\nWhy: {intent["why"]}\nWhere: {intent["where"]}\n'
-            f'If it failed: {intent["impact"]}\n\nEvidence:\n{json.dumps(row, indent=2, default=str)}\n\n{error}')
+            f'If it failed: {intent["impact"]}\nWhat the user notices: {intent["user"]}\n\n'
+            f'Evidence:\n{json.dumps(row, indent=2, default=str)}\n\n{error}')
 
 
 def discover(root):
@@ -318,7 +351,7 @@ def generate(profile, inputs, output, summary=None):
         root = Path(root).resolve()
         paths = discover(root)
         if not paths:
-            intent = INTENTS['missing']
+            intent = described_intent('missing')
             suites.append((f'What: {intent["what"]} [{root.name}]', 'missing', intent,
                            [{'case': 'machine-readable results', 'status': 'FAIL',
                              'error': f'No results.json was found below {root}.'}]))
@@ -332,7 +365,7 @@ def generate(profile, inputs, output, summary=None):
                 key = intent_key(profile, source, row)
                 groups.setdefault(key, []).append(row)
             for key, group_rows in groups.items():
-                intent = INTENTS[key]
+                intent = described_intent(key)
                 used_intents[key] = intent
                 suites.append((f'What: {intent["what"]} [{source}]', source, intent, group_rows))
 
@@ -345,7 +378,8 @@ def generate(profile, inputs, output, summary=None):
         total_time += duration
         suite = ET.SubElement(root_xml, 'testsuite', name=title, tests=str(len(rows)),
                               failures=str(failures), errors='0', skipped=str(skipped), time=f'{duration:.3f}')
-        group = f'Why: {intent["why"]} | Where: {intent["where"]} | If it failed: {intent["impact"]}'
+        group = (f'Why: {intent["why"]} | Where: {intent["where"]} | '
+                 f'If it failed: {intent["impact"]} | What the user notices: {intent["user"]}')
         for row in rows:
             testcase = ET.SubElement(suite, 'testcase', classname=group, name=case_name(row),
                                      time=f'{float(row.get("seconds", 0) or 0):.3f}')
@@ -365,9 +399,11 @@ def generate(profile, inputs, output, summary=None):
         summary = Path(summary)
         lines = ['## Qualification test intent', '',
                  'The JUnit check below lists the concrete cases. This table explains what each group protects.', '',
-                 '| What | Why | Where | If it failed |', '| --- | --- | --- | --- |']
+                 '| What | Why | Where | If it failed | What the user notices |',
+                 '| --- | --- | --- | --- | --- |']
         for intent in used_intents.values():
-            fields = [intent[key].replace('|', '\\|').replace('\n', ' ') for key in ('what', 'why', 'where', 'impact')]
+            fields = [intent[key].replace('|', '\\|').replace('\n', ' ')
+                      for key in ('what', 'why', 'where', 'impact', 'user')]
             lines.append('| ' + ' | '.join(fields) + ' |')
         with summary.open('a') as stream:
             stream.write('\n'.join(lines) + '\n')

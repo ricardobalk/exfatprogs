@@ -78,11 +78,15 @@ a reproducible starting point; reduction is open work.
 ## GitHub Actions artifacts
 
 `.github/workflows/resize.yml` converts every recorded JSON case to JUnit XML.
-Each job summary first shows a short `What`, `Why`, `Where`, and `If it failed`
-table in technical English. A pinned test-reporter action then publishes the
-JUnit cases as a GitHub Check with per-suite totals, case names, durations,
-skips, and failure evidence. Repeated model and fault cases include their seed,
-geometry, direction, fault mode, or reached boundary in the displayed name.
+Each job summary first shows a short `What`, `Why`, `Where`, `If it failed`, and
+`What the user notices` table in technical English. The last column translates
+the safety property into an everyday symptom: missing photos, corrupt videos or
+recordings, unusable added space, a device asking to format its storage, or a
+computer that no longer sees its partitions. A pinned test-reporter action then
+publishes the JUnit cases as a GitHub Check with per-suite totals, case names,
+durations, skips, and failure evidence. Repeated model and fault cases include
+their seed, geometry, direction, fault mode, or reached boundary in the
+displayed name.
 
 The converter also creates a failing `campaign completion` case when a runner
 records an incomplete or failed campaign without a failed child row. If no
