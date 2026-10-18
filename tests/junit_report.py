@@ -194,6 +194,11 @@ def described_intent(key):
     return INTENTS[key] | {'user': USER_EFFECTS[key]}
 
 
+def suite_title(intent, source):
+    return (f'What: {intent["what"]} | What the user notices: {intent["user"]} '
+            f'[{source}]')
+
+
 def load_json(path):
     try:
         return json.loads(path.read_text())
@@ -352,7 +357,7 @@ def generate(profile, inputs, output, summary=None):
         paths = discover(root)
         if not paths:
             intent = described_intent('missing')
-            suites.append((f'What: {intent["what"]} [{root.name}]', 'missing', intent,
+            suites.append((suite_title(intent, root.name), 'missing', intent,
                            [{'case': 'machine-readable results', 'status': 'FAIL',
                              'error': f'No results.json was found below {root}.'}]))
             used_intents['missing'] = intent
@@ -367,7 +372,7 @@ def generate(profile, inputs, output, summary=None):
             for key, group_rows in groups.items():
                 intent = described_intent(key)
                 used_intents[key] = intent
-                suites.append((f'What: {intent["what"]} [{source}]', source, intent, group_rows))
+                suites.append((suite_title(intent, source), source, intent, group_rows))
 
     root_xml = ET.Element('testsuites')
     total_time = 0.0

@@ -32,6 +32,8 @@ class JunitReportTests(unittest.TestCase):
             xml = ET.parse(output).getroot()
             cases = xml.findall('.//testcase')
             self.assertEqual(3, len(cases))
+            suites = xml.findall('.//testsuite')
+            self.assertTrue(all('What the user notices:' in suite.attrib['name'] for suite in suites))
             self.assertIn('seed 7', cases[0].attrib['name'])
             failure = xml.find('.//failure')
             self.assertIn('What:', failure.text)
