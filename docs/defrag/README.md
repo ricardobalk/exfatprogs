@@ -1,265 +1,266 @@
-# exFAT-defrag: herstel en experimentele imagekwalificatie
+# exFAT defragmentation repair and experimental image qualification
 
-**BLUF:** de oorspronkelijke corrupties zijn reproduceerbaar gemaakt en de
-allocatie- en writebackfouten zijn hersteld. Een Linux-imageinterface voegt
-strikte preflight, een duurzaam extern undo-journal en gecontroleerd herstel toe.
-Een aanvullende kopieerworkflow publiceert alleen onafhankelijk gevalideerde
-resultaten. **Vrijgavestatus: functioneel hersteld binnen de beschreven scope,
-experimenteel bruikbaar op wegwerpimages; niet vrijgegeven voor rechtstreeks
-gebruik op gebruikersvolumes.** De gewone autotools-build blijft ongewijzigd.
+**Bottom line:** This branch reproduces and repairs the known allocation and
+writeback defects. It adds strict checks, a durable external undo journal, and
+verified recovery for Linux image files. A separate copy workflow publishes a
+result only after independent validation. **Release status: the function works
+in the specified scope. Use it only with small, disposable, offline image
+files. Do not use it directly on user volumes.** The normal autotools build
+does not build or install the defragmenter.
 
-Deze uitvoering gebruikt eigen bewijs. Cijfers uit `context/` zijn geen nieuwe
-meetresultaten. De feitelijke resultaten en beperkingen staan in
-[qualification.md](qualification.md); machineleesbaar bewijs staat onder
-[evidence/](evidence/README.md). De aanpak volgt de scheiding tussen interface,
-herstelprotocol, onafhankelijke tests en vrijgavebeleid van `feat/exfat-resize`,
-zonder die branch in deze branch samen te voegen.
+This work has its own evidence. Results in `context/` are historical input.
+They are not results from this work. See [qualification.md](qualification.md)
+for the measured results and limits. See [evidence/](evidence/README.md) for
+machine-readable evidence.
 
-## Aanleiding en uitgangspunt
+This document puts decisions and limits before implementation details. It uses
+short sentences and consistent terms in the style of ASD-STE100. It has not
+had a formal ASD-STE100 conformance review.
 
-Basis: exfat-next-commit `1647ed54299ae8c4343a5edf40b892307f7e6459`.
-De branch heet `fix/exfat-defrag`. Bij aanvang waren `context/` en `resize/`
-ongetrackt; ze zijn niet in de patch opgenomen of overschreven. De upstream
-README vraagt patches tegen exfat-next en Signed-off-by; beide zijn gevolgd.
+## Scope and basis
 
-[Issue 318](https://github.com/exfatprogs/exfatprogs/issues/318) bevat meldingen
-van dataverlies en discussie over uitgestelde metadatawriteback. Dat zijn
-onderzoeksaanwijzingen, geen verklaring van iedere individuele melding.
+The base is exfat-next commit
+`1647ed54299ae8c4343a5edf40b892307f7e6459`. The branch is
+`fix/exfat-defrag`. The `context/` and `resize/` directories were untracked at
+the start of the work. This patch does not include or change them.
+
+[Issue 318](https://github.com/exfatprogs/exfatprogs/issues/318) reports data
+loss and discusses delayed metadata writeback. These reports are research
+inputs. They do not prove one cause for all reported damage.
 [Release 1.3.1](https://github.com/exfatprogs/exfatprogs/releases/tag/1.3.1)
-vermeldt dat defrag wegens gemeld dataverlies uit de build is gehaald. De lokale
-`Makefile.am` en `configure.ac` bevestigen dat dit op de gekozen basis nog zo is.
-Een eigen `git ls-remote` controleerde tevens upstream master en exfat-next;
-zie [sources.md](sources.md). Er is niets gepusht of gepubliceerd.
+states that upstream removed defrag from the build because of reported data
+loss. The local `Makefile.am` and `configure.ac` show that it is still disabled
+at the selected base. A separate `git ls-remote` check verified the upstream
+master and exfat-next revisions. See [sources.md](sources.md).
 
-Het praktische resultaat is één extent per ondersteunde allocatie. Dat kan
-bruikbaar zijn voor apparaten die aaneengesloten bestanden verwachten. Deze
-uitvoering onderzoekt geen firmware van mediaspelers en bewijst geen defect in
-zo'n apparaat.
+The result gives one extent for each supported allocation. This can help a
+device that requires contiguous files. This work does not test media-player
+firmware. It does not prove that such firmware has a defect.
 
-## Onderdelen en verantwoordelijkheden
+## Components
 
-- [`defrag/defrag.c`](../../defrag/defrag.c): herstelde interne C-worker met
-  cluster-swaps, virtuele ketenknopen en metadatawriteback. Het expliciete
-  testbuildscript bouwt hem; rechtstreeks starten heeft **geen journal**.
-- [`defrag/layout.py`](../../defrag/layout.py): begrensde preflight en vergelijking
-  van inhoud, metadata, bootregio's en allocaties. Gebruikt geen C-parser.
-- [`defrag/image_defrag.py`](../../defrag/image_defrag.py) en
-  [`defrag/defrag.exfat`](../../defrag/defrag.exfat): Linux-imageinterface met
-  lock, journal, commit en herstel. Dit is de experimentele operationele ingang.
-- [`tests/defrag/image.py`](../../tests/defrag/image.py): onafhankelijke on-disk
-  reader, plus modelgenerator. Importeert geen productieparser of C-mapping.
-- [`tests/defrag/defrag_image.py`](../../tests/defrag/defrag_image.py): bron
-  read-only openen, private kandidaat, journaled defrag, onafhankelijke reader
-  en fsck, atomische publicatie zonder bestaande output te vervangen.
+- [`defrag/defrag.c`](../../defrag/defrag.c) is the repaired internal C worker.
+  It moves clusters and writes allocation metadata. The explicit test build
+  builds it. The worker has no journal when you start it directly.
+- [`defrag/layout.py`](../../defrag/layout.py) checks the supported layout. It
+  compares file content, metadata, boot regions, and allocations. It does not
+  use the C parser.
+- [`defrag/image_defrag.py`](../../defrag/image_defrag.py) and
+  [`defrag/defrag.exfat`](../../defrag/defrag.exfat) provide the experimental
+  Linux image-file interface. This interface controls the lock, journal,
+  commit, and recovery sequence.
+- [`tests/defrag/image.py`](../../tests/defrag/image.py) contains the independent
+  on-disk reader and the model generator. It does not import the production
+  parser or the C virtual mapping.
+- [`tests/defrag/defrag_image.py`](../../tests/defrag/defrag_image.py) opens the
+  source read-only. It makes a private candidate, defragments it with a journal,
+  validates it independently, and publishes it without replacing an output.
 
-De C-worker blijft een intern experimenteel mechanisme. De journalinterface
-maakt een protocol van de gehele bewerking; de writebackvolgorde van de worker
-is op zichzelf geen crashherstelprotocol.
+The C worker is an internal experimental component. Its write order is not a
+crash-recovery protocol. The image-file interface applies the recovery protocol
+to the complete operation.
 
-## Bevestigde defecten en oplossing
+## Confirmed defects and repairs
 
-| Hypothese uit de opdracht | Bevinding op de basis | Herstel en gerichte proef |
+| Investigation item | Finding at the base | Repair and focused test |
 | --- | --- | --- |
-| Lege vendor-allocatie verschuift virtuele index | Bij lezen overgeslagen, bij schrijven geconsumeerd | Dezelfde selectie in beide passes; `empty-vendor-index` |
-| Vendorchecksum vóór wijziging start/flags | Bevestigd | Checksum pas over uiteindelijke entry; `vendor-checksum` |
-| Onvoltooide ketens ten onrechte contiguous | Bevestigd bij cancellation | NoFatChain uit actuele links; root blijft FAT-gestuurd; `interrupted-directory-fat` |
-| Onderbroken systeemverplaatsing | Oorspronkelijke volgorde laat inconsistente toestand toe | Bitmap/upcase eerst afmaken, virtuele indexvolgorde behouden; `partial-system-relocation` |
-| Directorywriteback volgt nieuwe FAT te vroeg | Bevestigd in dezelfde onderbrekingsreproducer | Nieuwe FAT vóór directorytraversal schrijven; rootsemantiek apart |
-| Flush-/I/O-fouten niet juist verwerkt | Genegeerde directoryflush en fsync; EINTR niet herhaald | Flushstatus doorgeven, fsyncstatus controleren, EINTR herhalen; `directory-flush`, `fsync-status`, `eintr-read` |
-| Bootsector-, endian- en grensfouten | 4096-byte sectorreproducer bevestigt verkeerde checksum/backupplaats | Alleen rootveld schrijven; logische sectorgeometrie; endianconversies; size_t vóór vermenigvuldiging; `logical-boot-sector` |
-| Geen volledige ownershipcontrole | Onverklaarde allocatie wordt geaccepteerd | Eigendom/cycli/crosslinks vóór swaps; strikte hostpreflight; `unowned-allocation`, negatieve matrix |
+| An empty vendor allocation changes the virtual index | The read pass skipped it, but the write pass consumed it | Apply the same selection in both passes; `empty-vendor-index` |
+| The worker calculates a vendor checksum before it changes the start cluster and flags | Confirmed | Calculate the checksum after the last entry change; `vendor-checksum` |
+| The worker marks an incomplete chain as contiguous | Confirmed during cancellation | Derive NoFatChain from the current links; always use FAT links for the root; `interrupted-directory-fat` |
+| A system allocation can move only in part | The original order can leave an inconsistent state | Complete bitmap and upcase moves first; keep the virtual index order; `partial-system-relocation` |
+| Directory writeback follows new directory chains too early | Confirmed in the interruption reproducer | Write the new FAT before directory traversal; handle root semantics separately |
+| The worker does not handle flush and I/O errors correctly | It ignored a directory flush and fsync result; it did not retry EINTR | Return flush errors, check fsync, and retry EINTR; `directory-flush`, `fsync-status`, `eintr-read` |
+| The worker has boot-sector, endian, and boundary defects | A 4096-byte sector reproducer confirms the wrong checksum and backup offset | Write only the root field; use logical-sector geometry; correct endian conversions; use `size_t` before multiplication; `logical-boot-sector` |
+| The worker does not verify all allocation owners | It accepts an allocation with no owner | Check owners, cycles, and cross-links before swaps; run strict host checks; `unowned-allocation` and the negative matrix |
 
-Niet ieder onderdeel van een hypothese heeft een afzonderlijke historische
-corruptiereproducer. FAT-volgorde en foutieve contiguous-aannames delen een
-reproducer. Endianherstel en grotere rekenruimte zijn daarnaast code-inspectie;
-er is geen big-endian hardwareproef. Het verslag maakt dit onderscheid expliciet.
+Some findings share one historical reproducer. The FAT order and the wrong
+contiguous-chain assumption use the same reproducer. The endian repairs and
+the wider calculations also use code inspection. No big-endian hardware test
+was run.
 
-De baselinebuild haalt **alle** betrokken C-bronnen en headers uit de vastgepinde
-basis. Alleen de inmiddels verouderde aanroep van
-`exfat_write_checksum_sector` krijgt het ontbrekende nul-offsetargument.
-Er zijn geen gerepareerde gedeelde bibliotheken in die baseline gelinkt.
-`build.py --baseline` bewaart de bronkopie en `baseline.json`.
+The baseline build gets all related C sources and headers from the pinned base.
+It makes one compatibility change. It adds the missing zero-offset argument to
+the old `exfat_write_checksum_sector` call. It does not link repaired shared
+sources. `build.py --baseline` saves the source copy and `baseline.json`.
 
-## Ondersteuningsmatrix
+## Support matrix
 
-| Structuur of situatie | Experimentele imageinterface |
+| Structure or condition | Experimental image-file interface |
 | --- | --- |
-| Linux, regulier bestand, één hardlink, geen symlink | Ondersteund; bestand via fd gepind |
-| Volume vanaf byte nul, PartitionOffset=0, container exact volumegrootte | Ondersteund |
-| Images groter dan 256 MiB; diskimages met partitietabel | Voor writes geweigerd |
-| exFAT revisie 1.00, één FAT | Ondersteund |
-| Twee FATs/TexFAT; dirty/media-failure/reserved flags | Voor writes geweigerd |
-| FAT-bestanden en NoFatChain, inclusief stale FAT-waarden van NoFatChain | Ondersteund |
-| Root, geneste en gefragmenteerde directories | Ondersteund tot diepte 128; root gebruikt altijd FAT |
-| Lege bestanden, gedeeltelijke laatste clusters, valid-data-length | Ondersteund; logische bytes na VDL zijn nul |
-| Unicode en meerdere naamentries | Ondersteund via UTF-16 en opgeslagen upcase-tabel; geen Unicode-normalisatie |
-| Bitmap/upcase | Alleen aanvankelijk contiguous, complete FAT-ketens; beide worden gedefragmenteerd |
-| Label, serial, attributen, timestamps en UTC-offsets | Behouden; bootregio's en genormaliseerde entrysets worden vergeleken |
-| Volume-GUID-entry, vendor-extension-entry, TexFAT-padding, onbekende actieve entries | Voor writes geweigerd |
-| Lege E1-vendorallocaties met niet-nul GUID | Ondersteund; geen allocatie of NoFatChain toegestaan |
-| Gevulde E1-vendorallocaties | Alleen private fixture-GUID met bytes `00 01 ... 0f`; contract: opaque payload zonder fysieke verwijzingen |
-| Willekeurige commerciële vendor-GUID met payload | Geweigerd; het formaat van eventuele interne clusterverwijzingen is onbekend |
-| Bad clusters of onverklaarde bitmapallocaties | Voor writes geweigerd; registratie en volledige bron blijven ongewijzigd |
-| Vol en één vrij cluster | Ondersteund: swaps hebben geen vrije volumecluster nodig; volledig extern journal wel |
-| Fragmentatievrij volume | No-op; geen journal, marker of filesystemwrites |
-| Blockdevices, loop-attached images | Geweigerd, ook bij alleen analyse |
+| Linux regular file, one hard link, no symbolic link | Supported; an open file descriptor pins the inode |
+| Volume starts at byte zero, PartitionOffset is zero, container size equals volume size | Supported |
+| Image file is larger than 256 MiB, or contains a partition table | Rejected before writes |
+| exFAT revision 1.00 with one FAT | Supported |
+| Two FATs, TexFAT, or dirty, media-failure, or reserved flags | Rejected before writes |
+| FAT chains and NoFatChain files, including stale FAT values for NoFatChain | Supported |
+| Root, nested directories, and fragmented directories | Supported to depth 128; the root always uses the FAT |
+| Empty files, partial last clusters, and valid data length (VDL) | Supported; logical bytes after VDL are zero |
+| Unicode and multiple name entries | Supported with UTF-16 and the stored upcase table; no Unicode normalization |
+| Allocation bitmap and upcase table | Initially, each must be contiguous with a complete FAT chain; both are defragmented |
+| Label, serial number, attributes, times, and UTC offsets | Preserved; boot regions and normalized entry sets are compared |
+| Volume GUID entry, vendor extension entry, TexFAT padding, or unknown active entry | Rejected before writes |
+| Empty E1 vendor allocation with a nonzero GUID | Supported; it must have no allocation and no NoFatChain flag |
+| Populated E1 vendor allocation | Only the private fixture GUID with bytes `00 01 ... 0f`; its opaque payload must contain no physical references |
+| Arbitrary commercial vendor GUID with a payload | Rejected; internal cluster references can have an unknown format |
+| Bad cluster or unexplained bitmap allocation | Rejected before writes; the record and complete source stay unchanged |
+| Full volume or one free cluster | Supported; swaps do not need a free volume cluster; the external journal still needs space |
+| Volume has no fragmentation | No operation; no journal, marker, or file-system write |
+| Block device or loop-attached image file | Rejected, including read-only analysis |
 
-De private vendor-GUID is uitsluitend een kwalificatiecontract; dit is geen
-claim van ondersteuning voor alle vendorformaten. Bad-clustervolumes worden
-nog niet gedefragmenteerd. Dat is een resterende scopebeperking van REQ-F03,
-geen implementatie die slechte clusters als vrije bestemming gebruikt.
+The private vendor GUID is only a qualification contract. It does not give
+support for all vendor formats. The interface does not defragment a volume that
+has bad clusters. This is a limit of REQ-F03.
 
-Voor een ondersteunde layout zonder bad clusters past de totale allocatie in
-hetzelfde aantal clusters. De worker kan dus alle ketens achtereen aaneengesloten
-plaatsen, ook bij een vol image. De interface accepteert een commit uitsluitend
-als de nieuwe reader nul discontinuïteiten bevestigt. Er is geen gedeeltelijke
-successtatus: cancellation herstelt de oude toestand; een I/O-fout vraagt herstel.
+A supported layout without bad clusters has the same allocation size before
+and after the operation. The worker can place all chains contiguously, including
+on a full image file. The interface commits only if the new reader reports zero
+discontinuities. It has no partial-success state. Cancellation restores the old
+state. An I/O error requires recovery.
 
-## Definitie van fragmentatie en behoud
+## Fragmentation and preservation rules
 
-Voor een niet-lege keten `c[0..n-1]` is een discontinuïteit een index `i` met
-`c[i+1] != c[i]+1`. Het aantal extents is `1 + discontinuïteiten`. Lege ketens
-hebben nul extents. De rapportage telt per allocatie en telt bestanden,
-directories, vendorstreams en systeemstreams afzonderlijk als eigenaar.
-Vrije ruimte tussen twee afzonderlijke bestanden is geen bestandsfragmentatie.
-De interface rapporteert geen misleidend gewogen percentage van vrije ruimte.
+For a nonempty chain `c[0..n-1]`, a discontinuity is an index `i` for which
+`c[i+1] != c[i]+1`. The extent count is one plus the discontinuity count. An
+empty chain has zero extents. The report counts each allocation separately. It
+includes files, directories, vendor streams, and system streams. Free space
+between two files is not file fragmentation.
 
-De externe workload houdt bestandspaden en verwachte bytes bij; de onafhankelijke
-reader controleert de geserialiseerde fixture vóór defrag tegen dat model.
-Daarna vergelijkt hij inhoudshashes, bestandstypen en entrymetadata. VDL blijft
-ongewijzigd: opslagbytes daarachter mogen bestaan, maar worden nooit als logische
-bestandsinhoud geïnterpreteerd of door verhoogde VDL zichtbaar gemaakt.
+The external workload stores file paths and expected bytes. Before defrag, the
+independent reader compares the serialized fixture with that model. After
+defrag, it compares content hashes, file types, and entry metadata. VDL does not
+change. Storage bytes after VDL can exist, but they are not logical file data.
+The operation does not expose them by increasing VDL.
 
-Startclusters, FAT-links, de bitmap, NoFatChain en bijbehorende entry-/bootchecksums
-mogen veranderen. Ze worden niet alleen uit een diff verwijderd: range, lengte,
-exclusief eigendom, bitmapbereik, juiste ketensemantiek en checksums moeten zowel
-voor als na geldig zijn. De bootvergelijking maskeert uitsluitend rootverwijzingen
-en checksumsectoren; de reader valideert de gemaskeerde velden inhoudelijk.
-Andere bootbytes, label en serial blijven behouden. Entryvergelijking maskeert
-alleen allocatieverwijzingen, NoFatChain en de afhankelijk berekende checksum.
-Een tweede interface-run moet het hele image byte-identiek laten.
+Start clusters, FAT links, the bitmap, NoFatChain flags, and dependent checksums
+can change. The validator still checks their range, length, ownership, bitmap
+coverage, chain semantics, and checksums before and after the operation. The
+boot comparison masks only root pointers and checksum sectors. The reader
+validates these masked fields separately. All other boot bytes remain equal.
+The entry comparison masks only allocation pointers, NoFatChain, and its
+dependent checksum. A second interface run must leave every image byte equal.
 
-## Bouwen en een korte smoketest
+## Build and smoke test
 
-Dependencies: Linux, Python 3.11+ (`hashlib.file_digest`, `Random.randbytes`),
-C-compiler, libc headers, libblkid development headers/library, GNU tar, xz,
-xxd en de gebruikelijke autotools voor de normale upstream-build. Het hostfilesystem
-moet advisory flock, user-xattrs, fsync en harde links ondersteunen. De journals
-moeten buiten het te bewerken volume staan. Driverproeven vereisen bovendien
-root/CAP_SYS_ADMIN, een Linux-exFAT-driver, mount/umount en losetup.
+Required tools are Linux, Python 3.11 or later, a C compiler, libc headers,
+libblkid headers and library, GNU tar, xz, xxd, and the normal autotools tools.
+The host file system must support advisory flock, user xattrs, fsync, and hard
+links. Store the journal outside the volume that you defragment. Driver tests
+also need root or CAP_SYS_ADMIN, the Linux exFAT driver, mount, umount, and
+losetup.
 
-Vanaf de repositoryroot:
+Run these commands from the repository root:
 
 ```sh
 python3 tests/defrag/build.py --baseline
 python3 tests/defrag/qualify.py --out defrag-test-results-smoke
 ```
 
-`qualify.py` bouwt zelf expliciete testbinaries. De smoketest doet baseline-
-reproducties, herstelde regressies, negatieve preflight en drie modelseeds.
-Er wordt niets geïnstalleerd of aan de normale build toegevoegd.
+The smoke test builds explicit test binaries. It reproduces the baseline
+defects. It then runs the repaired regressions, negative checks, and three model
+seeds. It does not install a program or change the normal build.
 
-## Analyse, uitvoering, herstel en kopieerworkflow
+The `Experimental defrag qualification` GitHub Actions workflow runs smoke
+tests with GCC and Clang. It also runs focused ASan and UBSan tests. A weekly or
+manual full job runs the complete rootless program. A separate manual job runs
+the privileged Linux-driver workloads on disposable loop images. Each job
+uploads its logs and JSON results.
 
-Gebruik uitsluitend zelf gemaakte wegwerpimages. De volgende commando's zijn
-concrete interfacevoorbeelden, geen toestemming om een echt volume te proberen.
+## Analysis, operation, recovery, and copy workflow
+
+Use only disposable image files that you created for this purpose.
 
 ```sh
-# Read-only analyse, JSON met discontinuïteiten, extents, haalbaarheid en beperkingen.
-./defrag/defrag.exfat --dry-run /tmp/eigen-volume.img
+# Analyze without writes. Print discontinuities, extents, feasibility, and limits as JSON.
+./defrag/defrag.exfat --dry-run /tmp/test-volume.img
 
-# Alleen een nieuwe journalmap; geen bestaande map hergebruiken.
-./defrag/defrag.exfat /tmp/eigen-volume.img --journal /tmp/eigen-defrag-journal
+# Use a new journal directory. Do not reuse an existing directory.
+./defrag/defrag.exfat /tmp/test-volume.img --journal /tmp/test-defrag-journal
 
-# Na status 3 of een kill: exact dezelfde inode en het originele journal.
-./defrag/defrag.exfat /tmp/eigen-volume.img --recover --journal /tmp/eigen-defrag-journal
+# After status 3 or a kill, use the same inode and the original journal.
+./defrag/defrag.exfat /tmp/test-volume.img --recover --journal /tmp/test-defrag-journal
 
-# Bron blijft read-only; resultaat mag nog niet bestaan.
+# Keep the source read-only. The output path must not exist.
 python3 tests/defrag/defrag_image.py \
   --defrag build-defrag-tests/defrag.exfat \
   --fsck build-defrag-tests/fsck.exfat \
-  /tmp/bron.img /tmp/gedefragmenteerd.img
+  /tmp/source.img /tmp/defragmented.img
 ```
 
-De journalinterface vraagt beschikbare ruimte voor een volledige imagekopie plus
-1 MiB marge. De wrapper heeft daarnaast de kandidaatkopie nodig. Een journal is
-een private directory (0700) met reguliere bestanden (0600, één hardlink,
-eigen gebruiker); symlinks worden geweigerd. Het protocol staat in
-[ADR 0002](adr/0002-recovery.md).
+The journal interface needs free space for one complete image copy plus 1 MiB.
+The copy workflow also needs space for its candidate. A journal is a private
+directory with mode 0700. Journal files have mode 0600, one hard link, and the
+current owner. The interface rejects symbolic links. See
+[ADR 0002](adr/0002-recovery.md) for the protocol.
 
-| Exit | Betekenis |
+| Exit status | Meaning |
 | --- | --- |
-| 0 | Analyse/no-op, volledige gevalideerde commit of voltooid herstel |
-| 1 | Gestopt vóór actieve transactie; wrapper: kandidaat niet gepubliceerd |
-| 2 | Ongeldige CLI-argumenten |
-| 3 | Actieve of onleesbare transactiestatus: hersteldata behouden, expliciet herstellen |
-| 4 | Commit of publicatie heeft plaatsgevonden, cleanup/durability niet volledig bevestigd; resultaat kan zichtbaar zijn |
-| 130 / 143 | SIGINT / SIGTERM; vóór commit teruggerold, tijdens commitbatch kan de geldige nieuwe toestand behouden zijn; JSON/diagnostiek geeft toestand |
+| 0 | Analysis, no operation, verified commit, or completed recovery |
+| 1 | The interface stopped before an active transaction; the copy workflow did not publish a candidate |
+| 2 | Invalid command-line arguments |
+| 3 | Active or unreadable transaction state; keep the recovery data and run recovery |
+| 4 | A commit or publication occurred, but cleanup or durability confirmation is incomplete; a result can be visible |
+| 130 or 143 | SIGINT or SIGTERM; the report identifies the old state after rollback or the new state after cancellation during the commit batch |
 
-Een fout tijdens een aangevraagd herstel kan opnieuw status 3 opleveren. Dezelfde
-undo-data blijven bruikbaar. Na duurzame markerverwijdering zijn eventuele
-resterende journalbestanden stale: herstel weigert die zonder writes. Na een
-volledig geslaagde cleanup is het journal verwijderd. Een herhaald herstelcommando
-kan dus veilig weigeren; het mag geen tweede bewerking uitvoeren.
+Recovery can return status 3 again after a new error. Keep the same undo data.
+After durable marker removal, remaining journal files are stale. Recovery
+rejects them without a write. A successful cleanup removes the journal.
 
-De signal handler registreert alleen het signaal. De gewone control flow wacht
-op de C-worker en herstelt zo nodig de bron. De worker krijgt op Linux een
-parent-death SIGKILL en erft de lockfd: een gecrashte host laat geen ongecontroleerd
-schrijvende worker achter die het herstel inhaalt. Dit is afzonderlijk getest.
-Tijdens undo wordt een tweede cancellation uitgesteld tot de oude toestand veilig
-is hersteld. Een I/O-fout heeft voorrang op een cancellation-succesmelding.
+The signal handler only records the signal. Normal control waits for the C
+worker and restores the source when necessary. On Linux, the worker receives
+SIGKILL if its parent dies. It also inherits the lock file descriptor. Thus, a
+failed host does not leave a worker that can race with recovery. Tests cover
+this sequence. During undo, the host delays a second cancellation until it has
+restored the old state. An I/O error has priority over cancellation status.
 
-Locks zijn advisory. Zichtbare loopattachments worden geweigerd, maar een andere
-mountnamespace of een proces dat locks negeert kan niet betrouwbaar worden
-uitgesloten. Offline/exclusief beheer is daarom een operationele voorwaarde;
-er wordt geen afdwingbare exclusieve toegang geclaimd.
+Locks are advisory. The interface rejects visible loop attachments. It cannot
+reliably detect another mount namespace or a process that ignores locks. Keep
+the image offline and under exclusive control.
 
-## Volledige kwalificatie en replay
+## Full qualification and replay
 
 ```sh
-# Volledig, inclusief native en ASan/UBSan, bestaande suite en driverproeven.
+# Run native tests, ASan/UBSan tests, upstream tests, and driver tests.
 python3 tests/defrag/qualify.py --full --driver --jobs 4 \
   --out defrag-test-results-full
 
-# Eén modelseed opnieuw, dezelfde geometrie/vendor-keuze uit seed afgeleid.
+# Replay one model seed. The seed selects the same geometry and vendor variant.
 python3 tests/defrag/run.py --cases 1 --start-seed 73 --operations 5000 \
   --out defrag-test-results-replay-73
 
-# Alle mutatiegrenzen van de kleine fixture en opnieuw onderbroken herstel.
+# Test all mutation boundaries of the small fixture and interrupted recovery.
 python3 tests/defrag/faults.py --out defrag-test-results-faults
 
-# Verlies/herordening/torn writes, apart van proceskills.
+# Model lost, reordered, and torn writes separately from process kills.
 python3 tests/defrag/persistence.py --out defrag-test-results-persistence
 
-# Alleen de werkelijke driverproef, in een private mountnamespace.
+# Run only the real driver test in a private mount namespace.
 sudo python3 tests/defrag/mounted.py --seeds 10 --operations 5000 \
   --out defrag-test-results-driver
 ```
 
-Elke outputmap moet nieuw zijn. `--build` selecteert een afwijkende expliciete
-buildmap. De seeds, geometrie, iteraties, effectieve modelmutaties, echte
-workload-OS-calls, fragmentatie, fsckstatus en foutposities worden machineleesbaar
-vastgelegd. Modeliteraties tellen niet als Linux-filesystemoperaties. De
-serializer doet image-I/O; dat maakt zijn 5.000 modelacties nog geen 5.000
-kernel-driveracties. De driver telt de werkelijk uitgevoerde expliciete `os.*`
-workloadcalls; runtime-, inspectie- en remountcalls staan buiten die teller.
+Use a new output directory for each command. Use `--build` to select a different
+explicit build directory. Reports record seeds, geometry, iterations, effective
+model changes, real workload system calls, fragmentation, fsck status, and fault
+positions. Model iterations are not Linux file-system operations. The driver
+count includes explicit `os.*` workload calls. It does not include runtime,
+inspection, or remount calls.
 
-Falen bewaart de private image(s), journals, acties, verwachte manifesten en
-logs. Succesvolle rootless seeds verwijderen grote tijdelijke bestanden en
-behouden hun caserecord. Foutinjectie bewaart geplande én bereikte posities.
-Een positie die niet geraakt is, faalt de proef. Interpositie wordt alleen
-bij de expliciet gestarte eigen C-testworker geladen.
+A failed test keeps private image files, journals, operation logs, expected
+manifests, and logs. A successful rootless seed removes large temporary files
+and keeps its case record. Fault tests record planned and reached positions. A
+test fails if it does not reach its target. Fault interposition applies only to
+the explicitly started C test worker.
 
-`minimize.py --seed N --operations M --match 'exacte fouttekst' --out ...`
-probeert halveringen van de workloadprefix met dezelfde seed en vereiste
-foutdiagnostiek. Dit is een heuristische hulpmogelijkheid, geen claim van een
-globaal minimale testcase of een uitgevoerde verkleining in het eindbewijs.
+`minimize.py --seed N --operations M --match 'exact error text' --out ...`
+tries shorter workload prefixes with the same seed and required diagnostic. It
+is a heuristic tool. The final evidence does not claim a global minimum or an
+executed reduction.
 
-## Grenzen van het bewijs
+## Evidence limits
 
-Er is geen herstelgarantie tegen verlies/corruptie van zowel image als duurzaam
-journal, een opslagapparaat dat over flush liegt, willekeurige torn hostmetadata,
-malafide gelijktijdige schrijvers of hardwaredefecten. Het persistencemodel is
-expliciet en afzonderlijk van werkelijk stroomverlies op een apparaat. Zie
-[ADR 0002](adr/0002-recovery.md) en
-[ADR 0004](adr/0004-release.md) voor de blokkades voor ruimere claims.
+Recovery does not cover loss or corruption of both the image and the durable
+journal. It does not cover a device that reports a false flush result, arbitrary
+torn host metadata, malicious concurrent writers, or hardware damage. The
+persistence model is separate from a real device power-loss test. See
+[ADR 0002](adr/0002-recovery.md) and [ADR 0004](adr/0004-release.md) for the
+release blockers.

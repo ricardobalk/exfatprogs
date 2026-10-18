@@ -1,32 +1,36 @@
-# ADR 0001: allocatie- en writebackinvarianten
+# ADR 0001: Allocation and writeback invariants
 
-Status: lokaal geïmplementeerd; niet door upstream geaccepteerd.
+**Decision:** Use one virtual node for each nonempty allocation. Verify exclusive
+cluster ownership before the first move. Complete system-file moves first. Write
+the new FAT before code follows a new directory chain.
 
-Een virtuele knoop vertegenwoordigt precies één niet-lege allocatie. Root komt
-éénmaal voor; een lege stream of lege vendorallocatie consumeert geen knoop.
-De lees- en schrijfpassen gebruiken dezelfde directoryvolgorde. Een afwijkende
-verplaatsingsvolgorde mag de indexering niet herschikken.
+Status: implemented locally; not accepted upstream.
 
-Iedere fysieke cluster heeft vóór verplaatsing exact één verklaarde eigenaar.
-Preflight controleert bereik, lengte, cycli, crosslinks, actieve entries en
-bitmap. Onbekende allocaties en slechte clusters leiden in deze eerste scope
-tot afwijzing; ze worden nooit als vrije bestemming behandeld. NoFatChain
-maakt de corresponderende FAT-velden ongeldig: stale FAT-inhoud bij zulke
-bestanden wordt niet als werkelijk eigendom of als bad-clusterregistratie gelezen.
+A virtual node represents exactly one nonempty allocation. The root occurs one
+time. An empty stream or empty vendor allocation does not consume a node. The
+read and write passes use the same directory order. A different move order must
+not change the index order.
 
-De worker verwerkt bitmap/upcase eerst tot contiguous ketens, ook bij een
-cancellationverzoek. Daarna mag hij tussen gewone swaps stoppen. Metadatawriteback
-berekent NoFatChain uit de werkelijke keten. De root gebruikt altijd FAT.
-De nieuwe FAT moet beschikbaar zijn voordat de iterator nieuwe directoryketens
-volgt. Iedere entrychecksum wordt na de laatste mutatie berekend. Alleen het
-vierbyte-rootveld van beide bootsectors wordt gewijzigd; checksumsectoren worden
-met de logische sectorgrootte vernieuwd.
+Before a move, each physical cluster must have exactly one declared owner. The
+checks verify ranges, lengths, cycles, cross-links, active entries, and the
+bitmap. This first scope rejects unknown allocations and bad clusters. It never
+uses them as free destinations. NoFatChain makes the related FAT fields invalid.
+Thus, stale FAT content for a NoFatChain file is not an owner or a bad-cluster
+record.
 
-Deze volgorde levert geen bescherming tegen een crash tussen twee writes.
-Daarvoor geldt ADR 0002. Bij een workerfout wordt geen geldige tussentoestand
-geclaimd; de interface houdt het journal actief. Succes vereist onafhankelijke
-inhouds-/metadatavergelijking en nul resterende discontinuïteiten.
+The worker makes the bitmap and upcase chains contiguous first. It completes
+these moves after a cancellation request. It can then stop between normal
+swaps. Metadata writeback calculates NoFatChain from the current chain. The root
+always uses the FAT. The worker writes the new FAT before the iterator follows
+new directory chains. It calculates each entry checksum after the last entry
+change. It changes only the four-byte root field in each boot sector. It updates
+checksum sectors with the logical sector size.
 
-Afgewezen alternatief: een indexgrens (`interrupt_point`) gebruiken als bewijs
-van contiguïteit. Swaps kunnen toekomstige ketens wijzigen; een verwerkingsgrens
-zegt daarom niets over hun actuele fysieke links.
+This order does not protect against a crash between writes. ADR 0002 defines
+that protection. The interface does not claim that an intermediate state is
+valid after a worker error. It keeps the journal active. Success requires an
+independent content and metadata comparison and zero remaining discontinuities.
+
+Rejected alternative: use an index boundary such as `interrupt_point` as proof
+of contiguity. A swap can change a future chain. Therefore, a processing boundary
+does not prove the current physical links of that chain.

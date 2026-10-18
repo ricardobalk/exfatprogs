@@ -1,98 +1,119 @@
-# ADR 0002: extern volledig undo-journal
+# ADR 0002: External full-image undo journal
 
-Status: lokaal geïmplementeerd en volgens het beschreven model getest;
-geen upstreamacceptatie of kwalificatie van blockdevices.
+**Decision:** Before the first image write, store and flush one complete
+preimage in an external journal. Bind the journal to the host inode and a random
+transaction token. After an interruption, select the old or new state only from
+verified durable records.
 
-## Keuze en identiteit
+Status: implemented locally and tested with the specified model. It has no
+upstream acceptance or block-device qualification.
 
-Voor kleine offline images is een volledige preimage eenvoudiger te controleren
-dan een nieuw clusterjournal. Het kost ongeveer één volledige image aan extra
-opslag en maakt de herstelbeslissing onafhankelijk van mogelijk beschadigde
-filesystemmetadata. De host is begrensd op 256 MiB en Linux-reguliere bestanden.
-Er wordt geen prestatie- of schaalclaim voor echte kaarten gedaan.
+## Scope and identity
 
-Formaatversie 1 bestaat uit `preimage`, `manifest`, optioneel `commit.tmp` en
-`commit`. Manifest en commit zijn canonieke ASCII-JSON-records met een SHA-256
-van hun payload. Het manifest bindt apparaat/inode van het hostbestand, grootte,
-oorspronkelijke volumeserial en volledige preimagehash aan een willekeurig
-128-bit token. Het token staat tevens als `user.exfatprogs.defrag`-xattr op de
-image-inode. Het journal is 0700; bestanden zijn 0600, eigen gebruiker, één link.
-Alle bestanden en de directory worden zonder symlinkvolging geopend.
+A complete preimage is easier to verify than a new cluster-level journal for
+small offline image files. It needs approximately one image of additional
+storage. It also makes recovery independent from damaged file-system metadata.
+The host accepts Linux regular files up to 256 MiB. This decision makes no
+performance or scale claim for physical media.
 
-Een gekopieerd image heeft een andere inode; een oud journal heeft een ander
-of ontbrekend token. Beide worden geweigerd. Voor herstel worden eerst alle
-records en de gehele preimage, inclusief de opgeslagen serial, gecontroleerd.
-Het live bootsector kan juist torn zijn; die is daarom geen herstelvoorwaarde.
-Ontbrekende of onbetrouwbare hersteldata leiden tot stoppen, nooit gokken.
+Format version 1 uses `preimage`, `manifest`, optional `commit.tmp`, and
+`commit`. The manifest and commit are canonical ASCII JSON records. Each record
+has a SHA-256 digest of its payload. The manifest binds these values to a random
+128-bit token:
 
-## Duurzame volgorde
+- host device and inode;
+- host file size;
+- original volume serial number;
+- complete preimage SHA-256 digest.
 
-1. Image openen en exclusieve advisory lock verkrijgen; loopattachments weigeren.
-   Preflight en fsck zijn read-only. Geen marker of journal voor een afwijzing.
-2. Nieuwe journalmap maken. Volledige preimage schrijven, short transfers en
-   EINTR afhandelen; preimage fsync. Manifest schrijven en fsync.
-3. Journaldirectory en zijn parent fsync: hersteldata en namen zijn duurzaam.
-4. Uniek token aan image toevoegen en image fsync. Pas daarna worker starten.
-5. Worker mag destructieve swaps en metadatawrites uitvoeren. Die hoeven
-   tussentijds geen geldig mountbaar filesystem op te leveren. Het actieve
-   token betekent dat uitsluitend herstel of de lopende host verder mag gaan.
-6. Worker afsluiten, strikte semantische/allocatiecontrole en fsck uitvoeren.
-   Image fsync: de volledige nieuwe toestand is duurzaam vóór commit.
-7. Volledige nieuwe imagehash in `commit.tmp` schrijven, fsync, hernoemen naar
-   `commit`, journaldirectory fsync. Dit is de duurzame commitgrens.
-8. Token verwijderen, image fsync. Daarna pas recoverybestanden verwijderen,
-   journaldirectory fsync, map verwijderen en parent fsync.
+The image inode also stores the token in the `user.exfatprogs.defrag` xattr. The
+journal directory has mode 0700. Its files have mode 0600, the current owner,
+and one hard link. The host opens all files and directories without following a
+symbolic link.
 
-Een cancellation vóór de commitbatch brengt via gewone control flow de oude
-bytes terug en flushes die. Tijdens de commitbatch wordt niet onder een mogelijk
-gepubliceerd commitrecord teruggeschreven. Er wordt dan een geldige nieuwe
-staat bevestigd of status 3/4 met hersteldata gerapporteerd. 130/143 blijven
-herkenbaar als er een cancellationverzoek was.
+A copied image has a different inode. An old journal has a different or missing
+token. Recovery rejects both conditions. Before recovery starts, it verifies all
+records and the complete preimage, including the stored serial number. The live
+boot sector can be torn. Thus, it is not an identity requirement for recovery.
+If recovery data is missing or unreliable, the host stops. It does not guess.
 
-## Herstelbeslissing en opnieuw crashen
+## Durable sequence
 
-Zonder `commit` worden de originele bytes uit de volledig geverifieerde
-preimage teruggeschreven, geflusht en volledig teruggelezen/gehasht. Met een
-`commit` wordt uitsluitend de nieuwe toestand geaccepteerd als token en
-volledige imagehash overeenkomen. Een ongeldige commit is geen toestemming om
-terug te rollen; het systeem stopt met hersteldata intact.
+1. Open the image and acquire an exclusive advisory lock. Reject loop
+   attachments. Run the layout checks and fsck without writes. Do not make a
+   marker or journal for a rejected image.
+2. Make a new journal directory. Write the complete preimage. Handle short I/O
+   and EINTR. Run fsync on the preimage. Write and flush the manifest.
+3. Run fsync on the journal directory and its parent. This makes the recovery
+   data and names durable.
+4. Add a unique token to the image. Run fsync on the image. Start the worker only
+   after this operation succeeds.
+5. Let the worker do destructive swaps and metadata writes. Intermediate states
+   do not have to be mountable. While the token is active, only the current host
+   or recovery can continue.
+6. Wait for the worker. Run strict semantic, allocation, and fsck checks. Run
+   fsync on the image. The complete new state is durable before commit.
+7. Write the complete new image digest to `commit.tmp`. Flush it. Rename it to
+   `commit`. Flush the journal directory. This is the durable commit boundary.
+8. Remove the token. Flush the image. Then remove the recovery files, flush the
+   journal directory, remove the directory, and flush its parent.
 
-Herstel verandert de undo-bron niet. Een kill of EIO midden in undo laat het
-actieve token en dezelfde preimage staan. Herhalen voert dezelfde idempotente
-overschrijvingen uit. Na duurzame markerverwijdering hoeft niets meer aan de
-image te worden hersteld. Een stale journal of een al verwijderde journalmap
-wordt veilig geweigerd; herhaling hoeft geen tweede successtatus te geven.
+Cancellation before the commit batch restores and flushes the old bytes through
+normal control flow. During the commit batch, the host does not restore old
+bytes after it can have published a commit record. It confirms a valid new state
+or reports status 3 or 4 with recovery data. Status 130 or 143 still identifies
+a cancellation request.
 
-De worker erft de flockfd en krijgt Linux PR_SET_PDEATHSIG=SIGKILL. De parent-
-identiteit wordt na het instellen gecontroleerd. Herstel kan pas de lock nemen
-wanneer de worker zijn fd's heeft gesloten. De test stopt een worker na een
-write, doodt de host en controleert dat herstel vervolgens kan voltooien.
+## Recovery and repeated interruption
 
-## Storage- en storingsmodel
+Without `commit`, recovery writes the original bytes from the fully verified
+preimage. It flushes, rereads, and hashes the complete image. With `commit`, it
+accepts the new state only when the token and complete image digest agree. An
+invalid commit is not permission to restore old bytes. Recovery stops and keeps
+the data.
 
-Aangenomen: succesvolle fsync bewaart alle eerdere writes aan dat bestand;
-directory-fsync bewaart de voorafgaande namespacewijzigingen; image-fsync
-bewaart tevens zijn xattr. Duurzame journaldata worden niet daarna spontaan
-beschadigd. Locks en offlinebeheer worden gerespecteerd. SHA-256 detecteert
-accidentele corruptie, zonder authenticiteit tegen een kwaadwillende gebruiker.
+Recovery does not change the undo source. A kill or EIO during undo leaves the
+active token and the same preimage. A repeated recovery writes the same bytes.
+After durable marker removal, the image needs no more recovery. Recovery safely
+rejects a stale journal or a journal directory that was already removed. A
+repeated command does not have to return a second success.
 
-Vóór image-fsync mogen imagewrites verloren gaan, worden herordend of gedeeltelijk
-overleven. De replayproef gebruikt werkelijke workerwrites en test iedere
-prefix, iedere halve write na een prefix, omgekeerde volgorden en deterministische
-subsets. Alle toestanden vóór commit moeten naar exact de oude bytes herstellen.
-Na image-fsync maar vóór duurzame commit is oud óf nieuw toegestaan: aanwezigheid
-van een geldige commit kiest nieuw, ontbreken kiest oud. Na duurzame commit
-is de volledige nieuwe toestand vereist. Proceskills testen daarnaast werkelijke
-journals/markers/flushfouten, inclusief opnieuw gekilled herstel.
+The worker inherits the flock file descriptor. Linux gives it
+`PR_SET_PDEATHSIG=SIGKILL`. The child checks the parent identity after it sets
+this option. Recovery can acquire the lock only after the worker closes its file
+descriptors. A test stops the worker after a write, kills the host, and verifies
+that recovery then completes.
 
-Dit model bewijst niet dat elk hostfilesystem en iedere controller die aannames
-bij echt stroomverlies nakomt. Persistent EIO/ENOSPC kan herstel tijdelijk
-blokkeren; de garantie is herstelbaarheid na het verdwijnen van de fout, niet
-een succesvolle write naar defecte opslag. Verlies van journal én image,
-corruptie van duurzaam journal, niet-gemodelleerde hostmetadata-tears en flushes
-die onterecht succes rapporteren vallen buiten het model.
+## Storage and failure model
 
-Afgewezen alternatief: alleen na iedere swap metadata bijwerken. Dat heeft
-zonder atomair protocol nog steeds onderbrekingsvensters tussen data, FAT,
-bitmap en directoryentries. Een kopiewrapper alleen beschermt evenmin een
-rechtstreeks schrijvende engine.
+The model makes these assumptions:
+
+- A successful file fsync makes all earlier writes to that file durable.
+- A successful directory fsync makes earlier namespace changes durable.
+- Image fsync also makes the image xattr durable.
+- Durable journal data does not later become corrupt without a reported error.
+- Other processes respect locks and offline control.
+- SHA-256 detects accidental corruption. It does not authenticate data against
+  a malicious user.
+
+Before image fsync, an image write can be lost, reordered, or partly retained.
+The replay test uses actual worker writes. It tests each prefix, each half write
+after a prefix, reverse orders, and deterministic subsets. Every state before
+commit must recover the exact old bytes.
+
+After image fsync and before durable commit, either old or new is permitted. A
+valid commit selects new. No commit selects old. After durable commit, the
+complete new state is required. Process-kill tests also use real journals,
+markers, flush errors, and repeated interruption during recovery.
+
+This model does not prove that every host file system or controller keeps these
+assumptions during real power loss. Persistent EIO or ENOSPC can temporarily
+block recovery. The guarantee is that recovery can continue after that error is
+removed. The model excludes loss of both journal and image, corruption of a
+durable journal, host metadata tears outside the model, and flush operations
+that incorrectly report success.
+
+Rejected alternative: update metadata after each swap only. Without an atomic
+protocol, interruption windows still exist between data, FAT, bitmap, and
+directory entries. A copy workflow alone also cannot protect a worker that
+writes directly to its source.

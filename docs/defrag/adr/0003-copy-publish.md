@@ -1,33 +1,39 @@
-# ADR 0003: kopiëren, onafhankelijk valideren en publiceren
+# ADR 0003: Copy, validate, and publish
 
-Status: lokaal geïmplementeerd; niet door upstream geaccepteerd.
+**Decision:** Keep the source read-only. Defragment a private candidate. Publish
+the candidate with an atomic no-replace hard link only after independent
+validation.
 
-De workflow opent de bron uitsluitend O_RDONLY, zonder symlinkvolging, met
-shared advisory flock en loopdetectie. De fd pint de inode. Alleen een reguliere
-image binnen de hostsupportmatrix wordt geaccepteerd. Een reeds actieve
-transactiemarker blokkeert de operatie.
+Status: implemented locally; not accepted upstream.
 
-Een private tijdelijke map (0700) komt in dezelfde parent als de output. De
-kandidaat is 0600. Volledige bronbytes worden gekopieerd met short-I/O-controle
-en kandidaat-fsync. Grootte/mtime/ctime worden daarna gecontroleerd. De
-journalinterface bewerkt alleen deze kopie. Onafhankelijke reader plus fsck
-controleren de kandidaat, inhoud en metadata moeten gelijk zijn en fragmentatie
-moet nul zijn. Vóór publicatie wordt bovendien de volledige bron opnieuw gehasht.
+The workflow opens the source with O_RDONLY and without symbolic-link following.
+It gets a shared advisory lock and checks for loop attachments. The open file
+descriptor pins the inode. The workflow accepts only a regular image file in the
+host support matrix. An active transaction marker blocks the operation.
 
-Publicatie gebruikt `link(candidate, output)`: op hetzelfde filesystem is die
-naamcreatie atomair en vervangt ze nooit een bestaande output, ook bij een race.
-Na de link volgt fsync van de outputdirectory. Na opruimen van de private map
-volgt opnieuw directory-fsync. Het gepubliceerde resultaat blijft privé (0600).
+The workflow makes a private temporary directory with mode 0700 in the output
+parent. The candidate has mode 0600. It copies all source bytes, handles short
+I/O, and flushes the candidate. It then checks size, mtime, and ctime. The
+journal interface modifies only this copy.
 
-Vóór de link: fouten geven geen publieke output. Een kill kan private resten
-achterlaten. Na de link: een mislukte directory-fsync kan een zichtbaar correct
-bestand achterlaten zonder bevestigde durability; status 4 meldt dat expliciet.
-Een kill op die grens laat eveneens mogelijk een zichtbaar bestand achter.
-De workflow belooft dus geen afwezigheid van output na iedere fout. Hij belooft
-een ongewijzigde bron en uitsluitend inhoudelijk geldige zichtbare kandidaten.
-Cleanup verwijdert nooit een al gepubliceerde output.
+The independent reader and fsck verify the candidate. Content and metadata must
+be equal. Fragmentation must be zero. Before publication, the workflow hashes
+the complete source again.
 
-Proceskills, kandidaatcorruptie, workerfouten, ENOSPC en alle wrapper-read-,
-write-, publicatie- en directoryflushgrenzen zijn afzonderlijke proeven. Een
-parentkill laat hoogstens werk aan de private kandidaat doorgaan; er bestaat
-dan geen wrapper meer die nog kan publiceren. De workflow vervangt ADR 0002 niet.
+Publication uses `link(candidate, output)`. On one file system, this creates the
+name atomically and never replaces an existing output. This is also true during
+a race. The workflow then flushes the output directory. After it removes the
+private directory, it flushes the output directory again. The published file
+keeps mode 0600.
+
+Before the link, an error gives no public output. A kill can leave private
+files. After the link, a failed directory fsync can leave a visible and valid
+file without confirmed durability. Status 4 reports this condition. A kill at
+this boundary can also leave a visible file. Thus, the workflow guarantees an
+unchanged source and only valid visible candidates. It does not guarantee that
+all failures leave no output. Cleanup never removes a published output.
+
+Separate tests cover process kills, candidate corruption, worker errors,
+ENOSPC, wrapper reads and writes, publication, and directory flush boundaries.
+A parent kill can leave work active only on the private candidate. No wrapper
+then exists to publish it. This workflow does not replace ADR 0002.

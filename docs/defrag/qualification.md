@@ -1,48 +1,48 @@
-# Werkelijk uitgevoerd bewijs en vrijgavestatus
+# Qualification evidence and release status
 
-Datum: 18 oktober 2026. Basis:
-`1647ed54299ae8c4343a5edf40b892307f7e6459` (gecontroleerde upstream exfat-next).
-Uitgebreide herkomst, compiler, platform, dependencies, bron- en binaryhashes:
+**Bottom line:** All recorded tests passed on 18 October 2026. The results
+qualify the function only for the experimental Linux image-file scope. They do
+not qualify direct use on user volumes. The normal build does not build or
+install the defragmenter.
+
+The verified base is exfat-next commit
+`1647ed54299ae8c4343a5edf40b892307f7e6459`. See
 [environment.json](evidence/environment.json),
-[build.json](evidence/build.json),
-[sanitizer-build.json](evidence/sanitizer-build.json).
+[build.json](evidence/build.json), and
+[sanitizer-build.json](evidence/sanitizer-build.json) for the compiler,
+platform, dependencies, and source and binary hashes.
 
-**Vrijgavestatus: experimentele Linux-imagefunctionaliteit; geen vrijgave voor
-rechtstreeks gebruik op gebruikersvolumes.** De onderstaande groene proeven
-heffen de beperkingen van ADR 0004 niet op. De normale build bouwt/installeert
-de defragmenter niet.
-
-| Uitgevoerde proef | Uitkomst | Bewijs |
+| Test | Result | Evidence |
 | --- | --- | --- |
-| Negen historische gerichte regressies | Alle negen vertonen op de vastgepinde baseline het verwachte defect; alle negen slagen op de herstelde worker | [baseline](evidence/baseline.json), [hersteld](evidence/regressions.json), [sanitizers](evidence/sanitizer-regressions.json) |
-| Native model | 1.000 seeds × 5.000 iteraties, plus twee extra capacitycases; 1.002 geldige, daadwerkelijk gefragmenteerde invoerimages; alles eindigt met nul discontinuïteiten | [run](evidence/model.json), [caserecords](evidence/model-cases.jsonl) |
-| ASan + UBSan + leak detection model | Dezelfde 1.002 cases, dezelfde afzonderlijk gecontroleerde uitkomsten, geen sanitizerdiagnostiek | [run](evidence/sanitizer-model.json), [caserecords](evidence/sanitizer-model-cases.jsonl) |
-| Geometrie/vendor/bezetting/diepte-matrix | 288 native en 288 sanitizercases: 12 geometrieën × vier vendorvarianten × drie bezettingen × twee directorydieptes | [native](evidence/matrix.json), [sanitizers](evidence/sanitizer-matrix.json) |
-| Linux-exFAT-driver | Tien seeds × 5.000 iteraties, offline defrag, remount en modelvergelijking; 130.242 expliciete workload-OS-calls, 44.629 effectieve modelmutaties en 1.280 extra fragmentatieacties | [driver](evidence/driver.json) |
-| Kleine-fixture-foutmatrix | 651 cases; 646 werkelijk geraakte injecties. Alle 67 workerwriteposities met SIGINT/SIGTERM/SIGKILL/EIO, plus host-, retry-, flush-, persistent EIO/ENOSPC-, opnieuw onderbroken herstel- en onbetrouwbare-journalproeven | [native](evidence/faults.json), [sanitizers](evidence/sanitizer-faults.json), [posities](evidence/faults-cases.jsonl) |
-| Expliciet persistencemodel | 154 native én 154 sanitizer-replays: prefixes, verlies, herordening en halve writes; steeds exact originele bytes na herstel | [native](evidence/persistence.json), [sanitizers](evidence/sanitizer-persistence.json) |
-| Kopieer/publicatieproeven | 68 native én 68 sanitizercases: bron ongewijzigd, geen ongeldige output, echt link-EEXIST bij concurrente creator, zichtbare geldige output na post-link flushfouten | [native](evidence/publication.json), [sanitizers](evidence/sanitizer-publication.json) |
-| Negatieve preflight | 29 native én 29 sanitizercases: cycles/crosslinks, bitmap, bad-clusterregistratie, onbekende allocatie/vendor, corruptie, overflowwaarden, ongeldige containers, lockconflict en links; volledige bronhash gelijk | [native](evidence/negative.json), [sanitizers](evidence/sanitizer-negative.json) |
-| Metadata en bootbytes | 512- en 4096-byte sectoren; acht attribuutcombinaties, timestamps/subseconden/UTC, VDL en bootbytes buiten rootveld behouden | [native](evidence/metadata.json), [sanitizers](evidence/sanitizer-metadata.json) |
-| Directoryflush en hostdeath | Workerflushfout doorgegeven; byte-exact undo. FIFO-journal geweigerd zonder blokkeren of writes. Hostkill terwijl worker na een write gestopt is: worker sterft en lock komt vrij vóór herstel | [native](evidence/transactions.json), [sanitizers](evidence/sanitizer-transactions.json) |
-| Bestaande upstream-corruptiefixtures | 24 native en 24 sanitizercases, inclusief bestaande grote sparse fixture; detecteren, repareren, schoon herlezen | [native](evidence/upstream.json), [sanitizers](evidence/sanitizer-upstream.json) |
-| Gewone autotools-build en make check | Beide bestaande interne suites slagen, nul skips | [log](evidence/autotools.log) |
-| Schone patchtoepassing | Vijf commits zonder three-way-merge toegepast op de basis; identieke tree; schone build/smoke en upstreamsuite slagen | [controle](evidence/clean-apply.json) |
-| Korte smoke-orchestrator | Build, baseline, herstel, negatieve cases en drie modelseeds werkelijk uitgevoerd | [smoke](evidence/smoke.json) |
+| Nine focused historical regressions | All nine show the expected defect on the pinned baseline; all nine pass on the repaired worker | [baseline](evidence/baseline.json), [repaired](evidence/regressions.json), [sanitizers](evidence/sanitizer-regressions.json) |
+| Native model | 1,000 seeds with 5,000 iterations, plus two capacity cases; 1,002 valid and fragmented input images; all results have zero discontinuities | [run](evidence/model.json), [case records](evidence/model-cases.jsonl) |
+| ASan, UBSan, and leak-detection model | The same 1,002 cases pass their independent checks; no sanitizer diagnostic occurs | [run](evidence/sanitizer-model.json), [case records](evidence/sanitizer-model-cases.jsonl) |
+| Geometry, vendor, occupancy, and depth matrix | 288 native and 288 sanitizer cases: 12 geometries, four vendor variants, three occupancy levels, and two directory depths | [native](evidence/matrix.json), [sanitizers](evidence/sanitizer-matrix.json) |
+| Linux exFAT driver | Ten seeds with 5,000 iterations, offline defrag, remount, and model comparison; 130,242 explicit workload system calls, 44,629 effective model changes, and 1,280 extra fragmentation actions | [driver](evidence/driver.json) |
+| Small-fixture fault matrix | 651 cases and 646 reached injections; all 67 worker write positions use SIGINT, SIGTERM, SIGKILL, and EIO; tests also cover host, retry, flush, persistent EIO and ENOSPC, interrupted recovery, and unreliable journals | [native](evidence/faults.json), [sanitizers](evidence/sanitizer-faults.json), [positions](evidence/faults-cases.jsonl) |
+| Explicit persistence model | 154 native and 154 sanitizer replays; prefixes, loss, reordering, and half writes; recovery always restores the exact original bytes | [native](evidence/persistence.json), [sanitizers](evidence/sanitizer-persistence.json) |
+| Copy and publication | 68 native and 68 sanitizer cases; unchanged source, no invalid output, real EEXIST race at link, and visible valid output after post-link flush errors | [native](evidence/publication.json), [sanitizers](evidence/sanitizer-publication.json) |
+| Negative checks | 29 native and 29 sanitizer cases; cycles, cross-links, bitmap errors, bad-cluster records, unknown allocations and vendors, corruption, overflow values, invalid containers, lock conflicts, and links; the complete source hash stays equal | [native](evidence/negative.json), [sanitizers](evidence/sanitizer-negative.json) |
+| Metadata and boot bytes | 512-byte and 4096-byte sectors; eight attribute combinations, times, subseconds, UTC offsets, VDL, and boot bytes outside the root field stay equal | [native](evidence/metadata.json), [sanitizers](evidence/sanitizer-metadata.json) |
+| Directory flush and host death | The worker returns a flush error and undo restores exact bytes; the host rejects a FIFO journal without a block or write; after a host kill, the stopped worker dies and releases the lock before recovery | [native](evidence/transactions.json), [sanitizers](evidence/sanitizer-transactions.json) |
+| Existing upstream corruption fixtures | 24 native and 24 sanitizer cases, including the existing large sparse fixture; detect, repair, and clean reread pass | [native](evidence/upstream.json), [sanitizers](evidence/sanitizer-upstream.json) |
+| Normal autotools build and `make check` | Both existing internal suites pass with zero skips | [log](evidence/autotools.log) |
+| Clean patch application | Five commits apply to the base without a three-way merge; the tree is equal; a clean build, smoke test, and upstream suite pass | [check](evidence/clean-apply.json) |
+| Short smoke orchestrator | Build, baseline, repair, negative cases, and three model seeds run as one command | [smoke](evidence/smoke.json) |
 
-De 1.000 hoofdseeds hebben 5.000.000 workloaditeraties. De twee extra capacitycases
-brengen het run-totaal op 5.010.000 iteraties en 4.490.423 effectieve modelmutaties.
-Native en sanitizer zijn aparte uitvoeringen van dezelfde seeds; ze worden niet
-als 2.000 verschillende seeds opgeteld. De matrix staat eveneens apart en wordt
-niet toegevoegd aan de claim van 1.000 random seeds. Een baseline-PASS betekent
-dat het oude defect is aangetoond, niet dat de oude implementatie correct is.
+The 1,000 main seeds contain 5,000,000 workload iterations. The two capacity
+cases increase the run total to 5,010,000 iterations and 4,490,423 effective
+model changes. Native and sanitizer runs use the same seeds. They are not 2,000
+different seeds. The matrix is also separate from the 1,000-seed claim. A
+baseline PASS means that the test reproduced the old defect. It does not mean
+that the old implementation is correct.
 
-## Werkelijk gebruikte commando's
+## Commands used for the recorded evidence
 
-De onderdelen zijn in aparte outputmappen uitgevoerd, zodat builds en proeven
-onafhankelijk inspecteerbaar bleven. De exacte extra-suite-argv's staan in
-[additional.json](evidence/additional.json) en
-[sanitizer-additional.json](evidence/sanitizer-additional.json). De hoofdcommando's:
+Each component used a separate output directory. This keeps builds and results
+independently reviewable. See [additional.json](evidence/additional.json) and
+[sanitizer-additional.json](evidence/sanitizer-additional.json) for the exact
+arguments of the additional suites.
 
 ```sh
 python3 tests/defrag/build.py --out build-defrag-tests-final --baseline
@@ -57,57 +57,64 @@ python3 tests/defrag/parallel.py --build build-defrag-tests-sanitize-final \
   --out build-defrag-tests-sanitize-final/qualification-model
 sudo -n python3 tests/defrag/mounted.py --build build-defrag-tests-final \
   --seeds 10 --operations 5000 --out build-defrag-tests-final/qualification-driver
-python3 tests/defrag/qualify.py --out build-defrag-tests-final/qualification-smoke-final-proof
+python3 tests/defrag/qualify.py \
+  --out build-defrag-tests-final/qualification-smoke-final-proof
 ```
 
-Foutinjectie onder ASan zet `DEFRAG_ASAN_RUNTIME` op
-`cc -print-file-name=libasan.so`, zodat de ASan-runtime vóór de expliciete
-workerinterposer wordt geladen. Python en fsck krijgen die interposer niet.
+For fault injection with ASan, `DEFRAG_ASAN_RUNTIME` is the result of
+`cc -print-file-name=libasan.so`. This loads the ASan runtime before the worker
+interposer. Python and fsck do not use that interposer.
 
-De volledige `qualify.py --full --driver` is beschikbaar als één reproduceerbaar
-commando voor alle onderdelen; de huidige uitgebreide bewijsset is met de
-bovenstaande afzonderlijke onderdelen uitgevoerd. De korte orchestratortest is
-wel als geheel uitgevoerd. Dit onderscheid voorkomt een claim over een
-full-orchestratorinvocatie die niet is gedaan.
+`qualify.py --full --driver` can run all components with one command. The
+recorded full evidence used the separate component commands above. The recorded
+short smoke test used the complete short orchestrator. The report does not claim
+that the full orchestrator ran as one invocation.
 
-## Waarschuwingen en niet-uitgevoerde claims
+The GitHub Actions workflow repeats the short qualification with GCC and Clang.
+It also runs focused sanitizer tests. Its scheduled full job runs the rootless
+program. The manual driver job runs the privileged loop-image tests. CI results
+are new run artifacts. They do not replace the evidence recorded in this tree.
 
-De expliciete builds geven drie bestaande waarschuwingstypen in ongewijzigde
-code: ongebruikte `ui`-parameter zonder blkid en signednessvergelijkingen in
-`lib/exfat_dir.c` en `fsck/fsck.c`. De historische baseline heeft bovendien
-signed-char bitmapwaarschuwingen; de herstelde worker gebruikt unsigned char.
-Er zijn geen nieuwe C-workercompilerwaarschuwingen.
+## Warnings and claims that were not run
 
-Checkpatch v6.18 meldt nul errors en één stijlwaarschuwing voor een regel van
-102 kolommen. De aanvullende spelling-/const-structlijsten waren niet aanwezig;
-die twee controles zijn dus niet uitgevoerd. Zie [checkpatch.log](evidence/checkpatch.log).
-De normale autotools-build en interne suites zijn native; de expliciete C-
-binaries en nieuwe image-/foutsuites zijn daarnaast met sanitizers uitgevoerd.
-Geen big-endian run, werkelijk power-cut hardwareproef, grote-volume-defrag,
-TexFAT-, algemene vendor- of bad-clusterdefragkwalificatie wordt geclaimd.
+The explicit builds show three existing warning types in unchanged code. These
+are an unused `ui` parameter without blkid and signedness comparisons in
+`lib/exfat_dir.c` and `fsck/fsck.c`. The historical baseline also has signed-char
+bitmap warnings. The repaired worker uses unsigned char. It adds no C compiler
+warning.
 
-## Onderzoeksfouten die niet als bewijs zijn meegeteld
+Checkpatch v6.18 reports zero errors and one style warning for a 102-column
+line. The additional spelling and const-structure lists were not available.
+Those two checks did not run. See [checkpatch.log](evidence/checkpatch.log).
 
-De eerste driverfixture groeide van 4 naar 12 KiB en bleef bij 16-KiB clusters
-ongedefragmenteerd. De fixture gebruikt nu de echte clustergrootte; iedere
-uiteindelijke driverseed bewijst positieve beginfragmentatie. Een eerdere
-modelgenerator gebruikte twee random groottes voor truncate; die uitvoering is
-afgebroken en vervangen door de complete runs met één correcte truncategrootte.
-Een aanvankelijk alleen in de root zoekende negatieve vendorproef is naar
-recursieve directoryadressering aangepast. Geen van deze onvoltooide of foutieve
-proeven is een PASS in de bovenstaande eindcijfers.
+The normal autotools build and internal suites ran without sanitizers. The
+explicit C binaries and new image and fault suites also ran with ASan, UBSan,
+and leak detection. The evidence does not include a big-endian run, a hardware
+power-loss test, large-volume defrag, TexFAT defrag, general vendor defrag, or
+bad-cluster defrag.
 
-Een raw-worker-I/O-fout kan een inconsistente image achterlaten; een test die
-hier toch een geldige eindimage eiste was te sterk voor dat mechanisme. De
-herstelde foutpropagatie wordt daarom rechtstreeks getest, en de beloofde
-byte-exacte veilige toestand via de journalinterface. Deze ervaring verklaart
-waarom alleen lokale symptoomreparaties of een copywrapper onvoldoende zijn.
+## Investigation runs that do not count as evidence
 
-De modelbewijzen bevatten de bij de start vastgelegde bronhashes. Latere
-uitbreidingen van testhulpcode staan daarnaast in environment.json. Het enige
-latere operationele grensherstel opent bron- en journalbestanden met O_NONBLOCK,
-zodat een FIFO vóór de reguliere-bestandscontrole niet kan blokkeren; dat is
-native en onder sanitizers gericht getest, plus opnieuw in de korte smoketest.
-Voor reguliere imagebestanden heeft die vlag geen effect. De geteste C-worker
-en layoutparser zijn tijdens deze definitieve runs niet gewijzigd.
-De releaseclaim blijft begrensd zoals in [ADR 0004](adr/0004-release.md).
+The first driver fixture grew from 4 KiB to 12 KiB. It did not fragment with
+16-KiB clusters. The final fixture uses the actual cluster size. Every recorded
+driver seed has positive fragmentation before defrag.
+
+An earlier model generator selected two random truncate sizes for one operation.
+That run stopped. The complete final runs use one correct truncate size. An
+early negative vendor test searched only the root. The final test searches
+directories recursively. These incomplete or incorrect runs are not PASS
+results in the table.
+
+A raw-worker I/O error can leave an inconsistent image. An early test required
+a valid final image after this error. That requirement was too strong for the
+raw worker. The final test checks error propagation directly. Separate journal
+tests check exact safe recovery. This result shows why a local worker repair or
+a copy wrapper alone is not sufficient.
+
+Model evidence contains the source hashes from the start of each run.
+`environment.json` also contains later test-helper hashes. The only later
+operational boundary repair adds O_NONBLOCK when it opens source and journal
+files. This prevents a FIFO from blocking before the regular-file check. Native,
+sanitizer, and smoke tests cover it. O_NONBLOCK has no effect on regular image
+files. The tested C worker and layout parser did not change during the final
+runs. [ADR 0004](adr/0004-release.md) still limits the release claim.

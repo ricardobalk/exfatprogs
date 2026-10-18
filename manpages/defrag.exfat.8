@@ -16,17 +16,20 @@ defrag.exfat \- experimental journaled offline exFAT image defragmentation
 .B --recover --journal
 .I original-directory
 .SH DESCRIPTION
-This experimental image interface is not installed by the normal build.
-It accepts Linux regular single-volume images up to 256 MiB, with one FAT,
-no loop attachment, and the support restrictions in docs/defrag/README.md.
-Block devices, TexFAT, unknown allocated entries and bad-cluster layouts are
-rejected before filesystem writes.
+Bottom line: use this experimental interface only with small, offline Linux
+image files. Do not use it directly on user volumes. The normal build does not
+install it.
+.PP
+The interface accepts regular single-volume image files up to 256 MiB. The
+volume must have one FAT and no loop attachment. The support restrictions in
+docs/defrag/README.md also apply. The interface rejects block devices, TexFAT,
+unknown allocated entries, and bad-cluster layouts before file-system writes.
 .PP
 Analysis is read-only. Writes require a new private external journal containing
 a full durable preimage, bound to the image inode and a transaction token.
 After a failure or kill, retain the image and original journal and use
 .BR --recover .
-A missing or corrupt journal is not guessed around.
+The interface does not guess when a journal is missing or corrupt.
 .PP
 The explicitly built C binary in build-defrag-tests is an internal unjournaled
 worker. Invoking it directly bypasses the recovery protocol.
@@ -36,7 +39,8 @@ worker. Invoking it directly bypasses the recovery protocol.
 Report allocation discontinuities, extents, feasibility and scope limits as JSON.
 .TP
 .B --journal directory
-New private journal directory for an operation, or the original directory for recovery.
+Specify a new private journal directory for an operation. For recovery, specify
+the original directory.
 .TP
 .B --recover
 Resolve an active transaction using verified undo data or a valid commit record.

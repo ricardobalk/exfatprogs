@@ -129,8 +129,11 @@ If you have any issues, please create [issues][1] or contact to [exfat mailing l
 
 ## Experimental defragmentation
 
-The normal build keeps defrag disabled. The restored worker, journaled Linux
-image interface, independent validation, reproducible tests and release limits
-are documented in [docs/defrag/README.md](docs/defrag/README.md). The experimental
-interface accepts small offline regular volume images; direct blockdevice use
-is not qualified. Start with `python3 tests/defrag/qualify.py --out defrag-test-results-smoke`.
+**Bottom line:** Defrag is experimental. Use it only with small, offline Linux
+image files. Do not use it directly on user volumes. The normal build keeps it
+disabled.
+
+The restored worker, journaled image-file interface, independent validation,
+reproducible tests, and release limits are documented in
+[docs/defrag/README.md](docs/defrag/README.md). Start with
+`python3 tests/defrag/qualify.py --out defrag-test-results-smoke`.
