@@ -11,6 +11,8 @@ on:
       - 'mkfs/**'
       - 'dump/**'
       - 'tests/defrag/**'
+      - 'tests/junit_report.py'
+      - 'tests/test_junit_report.py'
   pull_request:
     paths:
       - '.github/workflows/defrag.yml'
@@ -21,6 +23,8 @@ on:
       - 'mkfs/**'
       - 'dump/**'
       - 'tests/defrag/**'
+      - 'tests/junit_report.py'
+      - 'tests/test_junit_report.py'
   workflow_dispatch:
     inputs:
       full:
@@ -35,6 +39,8 @@ on:
     - cron: '23 3 * * 0'
 
 permissions:
+  actions: read
+  checks: write
   contents: read
 
 jobs:
@@ -54,12 +60,34 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential clang libblkid-dev xz-utils xxd
+      - name: Validate JUnit evidence conversion
+        run: python3 -m unittest discover -s tests -p 'test_junit_report.py' -v
       - name: Run baseline and repaired smoke qualification
         env:
           CC: ${{ matrix.compiler }}
         run: |
           python3 tests/defrag/qualify.py \
             --out "defrag-ci-smoke-${{ matrix.compiler }}"
+      - name: Generate descriptive JUnit report
+        if: always()
+        run: |
+          python3 tests/junit_report.py --profile defrag \
+            --input "defrag-ci-smoke-${{ matrix.compiler }}" \
+            --output "defrag-ci-smoke-${{ matrix.compiler }}/junit.xml" \
+            --summary "$GITHUB_STEP_SUMMARY"
+          python3 tests/defrag/manifest.py "defrag-ci-smoke-${{ matrix.compiler }}"
+      - name: Publish defrag smoke test report
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: Defrag smoke (${{ matrix.compiler }})
+          path: defrag-ci-smoke-${{ matrix.compiler }}/junit.xml
+          reporter: java-junit
+          report-title: Defrag smoke qualification (${{ matrix.compiler }})
+          use-actions-summary: false
+          list-suites: all
+          list-tests: all
+          fail-on-error: true
       - name: Upload qualification test output
         if: always()
         uses: actions/upload-artifact@v7
@@ -106,12 +134,26 @@ jobs:
             --build defrag-ci-sanitize/build \
             --cases 16 --operations 1000 \
             --out defrag-ci-sanitize/model
-      - name: Index sanitizer test output
+      - name: Generate descriptive JUnit report
         if: always()
         run: |
-          if test -d defrag-ci-sanitize; then
-            python3 tests/defrag/manifest.py defrag-ci-sanitize
-          fi
+          python3 tests/junit_report.py --profile defrag \
+            --input defrag-ci-sanitize \
+            --output defrag-ci-sanitize/junit.xml \
+            --summary "$GITHUB_STEP_SUMMARY"
+          python3 tests/defrag/manifest.py defrag-ci-sanitize
+      - name: Publish defrag sanitizer test report
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: Defrag sanitizer qualification
+          path: defrag-ci-sanitize/junit.xml
+          reporter: java-junit
+          report-title: Defrag sanitizer qualification
+          use-actions-summary: false
+          list-suites: all
+          list-tests: all
+          fail-on-error: true
       - name: Upload sanitizer test output
         if: always()
         uses: actions/upload-artifact@v7
@@ -137,6 +179,26 @@ jobs:
         run: |
           python3 tests/defrag/qualify.py --full --jobs 2 \
             --out defrag-ci-full
+      - name: Generate descriptive JUnit report
+        if: always()
+        run: |
+          python3 tests/junit_report.py --profile defrag \
+            --input defrag-ci-full \
+            --output defrag-ci-full/junit.xml \
+            --summary "$GITHUB_STEP_SUMMARY"
+          python3 tests/defrag/manifest.py defrag-ci-full
+      - name: Publish full defrag test report
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: Defrag full rootless qualification
+          path: defrag-ci-full/junit.xml
+          reporter: java-junit
+          report-title: Defrag full rootless qualification
+          use-actions-summary: false
+          list-suites: all
+          list-tests: all
+          fail-on-error: true
       - name: Upload full qualification test output
         if: always()
         uses: actions/upload-artifact@v7
@@ -171,12 +233,26 @@ jobs:
       - name: Make test output readable by the artifact service
         if: always()
         run: sudo chown -R "$(id -u):$(id -g)" defrag-ci-driver || true
-      - name: Index driver test output
+      - name: Generate descriptive JUnit report
         if: always()
         run: |
-          if test -d defrag-ci-driver; then
-            python3 tests/defrag/manifest.py defrag-ci-driver
-          fi
+          python3 tests/junit_report.py --profile defrag \
+            --input defrag-ci-driver \
+            --output defrag-ci-driver/junit.xml \
+            --summary "$GITHUB_STEP_SUMMARY"
+          python3 tests/defrag/manifest.py defrag-ci-driver
+      - name: Publish Linux driver test report
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: Defrag Linux driver qualification
+          path: defrag-ci-driver/junit.xml
+          reporter: java-junit
+          report-title: Defrag Linux driver qualification
+          use-actions-summary: false
+          list-suites: all
+          list-tests: all
+          fail-on-error: true
       - name: Upload driver test output
         if: always()
         uses: actions/upload-artifact@v7

@@ -50,13 +50,33 @@ each invoked step and its status. `PASS_WITH_BLOCKERS` means that at least one
 required capability, such as the optional driver run, was NOT_RUN. NOT_RUN is
 not PASS and cannot support the related release claim.
 
-The `Experimental defrag qualification` GitHub Actions workflow uploads each
-output directory as a job artifact. Pushes and pull requests produce GCC,
-Clang, and focused sanitizer artifacts. The scheduled full job produces the
-complete rootless artifact. A manual workflow run can also produce the
-privileged Linux-driver artifact. CI artifacts are retained temporarily; save
-an artifact outside GitHub before its retention period ends if it must become a
-long-lived release record.
+The `Experimental defrag qualification` GitHub Actions workflow converts every
+recorded JSON or JSONL case to JUnit XML. Each job summary first shows a short
+`What`, `Why`, `Where`, and `If it failed` table in technical English. A pinned
+test-reporter action then publishes the JUnit cases as a GitHub Check with
+per-suite totals, case names, durations, skips, and failure evidence. Repeated
+model and fault cases include their seed, geometry, fault mode, or reached
+boundary in the displayed name.
+
+The converter creates a failing `campaign completion` case when a runner
+records an incomplete or failed campaign without a failed child row. If no
+`results.json` exists, it creates a failing report-availability case. This
+keeps an early build or test-runner failure visible in the GitHub presentation.
+Pull requests from forks still receive the job summary and XML artifact, but
+the Check publication is skipped because their token cannot write checks.
+
+The workflow also uploads each output directory as a job artifact. Pushes and
+pull requests produce GCC, Clang, and focused sanitizer artifacts. The
+scheduled full job produces the complete rootless artifact. A manual workflow
+run can also produce the privileged Linux-driver artifact. CI artifacts are
+retained temporarily; save an artifact outside GitHub before its retention
+period ends if it must become a long-lived release record.
+
+The conversion itself is covered by `tests/test_junit_report.py`. Run it with:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_junit_report.py' -v
+```
 
 For fault injection with ASan, `DEFRAG_ASAN_RUNTIME` is the result of
 `cc -print-file-name=libasan.so`. This loads the ASan runtime before the worker
