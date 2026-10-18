@@ -1,0 +1,319 @@
+{
+  "status": "PASS",
+  "base": "1647ed54299ae8c4343a5edf40b892307f7e6459",
+  "source_head": "724f5f338af8f208b1ef790ada4193eaa413896e",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "worktree",
+        "add",
+        "--detach",
+        "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout",
+        "1647ed54299ae8c4343a5edf40b892307f7e6459"
+      ],
+      "exit": 0,
+      "seconds": 0.01
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "am.threeWay=false",
+        "am",
+        "/tmp/exfat-defrag-clean-final-wcie8hzj/series.mbox"
+      ],
+      "exit": 0,
+      "seconds": 0.045
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/defrag/qualify.py",
+        "--out",
+        "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke"
+      ],
+      "exit": 0,
+      "seconds": 14.423
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/defrag/upstream.py",
+        "--build",
+        "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native",
+        "--out",
+        "/tmp/exfat-defrag-clean-final-wcie8hzj/upstream"
+      ],
+      "exit": 0,
+      "seconds": 0.63
+    }
+  ],
+  "artifacts": "/tmp/exfat-defrag-clean-final-wcie8hzj",
+  "applied_tree_equals_source": true,
+  "clean_smoke": {
+    "status": "PASS",
+    "scope": "experimental Linux images; block devices remain unqualified",
+    "steps": [
+      {
+        "name": "build",
+        "argv": [
+          "/usr/bin/python3",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout/tests/defrag/build.py",
+          "--baseline",
+          "--out",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native"
+        ],
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 8.197
+      },
+      {
+        "name": "baseline",
+        "argv": [
+          "/usr/bin/python3",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout/tests/defrag/regressions.py",
+          "--binary",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/defrag.original",
+          "--mkfs",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/mkfs.exfat",
+          "--fault",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/fault.so",
+          "--out",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/baseline",
+          "--baseline"
+        ],
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.784
+      },
+      {
+        "name": "regressions",
+        "argv": [
+          "/usr/bin/python3",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout/tests/defrag/regressions.py",
+          "--binary",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/defrag.exfat",
+          "--mkfs",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/mkfs.exfat",
+          "--fault",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native/fault.so",
+          "--out",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/regressions"
+        ],
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.829
+      },
+      {
+        "name": "negative",
+        "argv": [
+          "/usr/bin/python3",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout/tests/defrag/negative.py",
+          "--build",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native",
+          "--out",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/negative"
+        ],
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 3.14
+      },
+      {
+        "name": "model",
+        "argv": [
+          "/usr/bin/python3",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/checkout/tests/defrag/run.py",
+          "--build",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/native",
+          "--cases",
+          "3",
+          "--operations",
+          "100",
+          "--out",
+          "/tmp/exfat-defrag-clean-final-wcie8hzj/smoke/model"
+        ],
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 1.412
+      }
+    ],
+    "seconds": 14.363
+  },
+  "clean_upstream": {
+    "status": "PASS",
+    "sanitizers": null,
+    "cases": [
+      {
+        "case": "tests/2tb_disk/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_bitmap/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_bitmap_size/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_dentries/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_dentries2/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_file_size/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_first_clu/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_num_chain/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bad_root/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/bs_bad_csum/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/clu_count_overflow/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/de_bad_csum/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/duplicate_clu/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/duplicated_name/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/file_invalid_clus/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/invalid_name/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/large_file_invalid_clus/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/loop_chain/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/rename_dot_entry/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/unused-dentries/exfat.img.tar.xz",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/upcase_table/0001-TableChecksum-and-upcase-table.sh",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/upcase_table/0002-FirstCluster.sh",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/upcase_table/0003-DataLength.sh",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      },
+      {
+        "case": "tests/upcase_table/0004-EntryType.sh",
+        "status": "PASS",
+        "detect_exit": 4,
+        "repair_exit": 1,
+        "verify_exit": 0
+      }
+    ],
+    "seconds": 0.584
+  },
+  "seconds": 15.139
+}

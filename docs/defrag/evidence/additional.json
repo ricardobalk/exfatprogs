@@ -1,0 +1,80 @@
+[
+  {
+    "name": "faults",
+    "argv": [
+      "python3",
+      "tests/defrag/faults.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-faults"
+    ],
+    "exit": 0,
+    "seconds": 216.004
+  },
+  {
+    "name": "persistence",
+    "argv": [
+      "python3",
+      "tests/defrag/persistence.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-persistence"
+    ],
+    "exit": 0,
+    "seconds": 55.302
+  },
+  {
+    "name": "publication",
+    "argv": [
+      "python3",
+      "tests/defrag/publication.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-publication"
+    ],
+    "exit": 0,
+    "seconds": 13.57
+  },
+  {
+    "name": "transaction_regressions",
+    "argv": [
+      "python3",
+      "tests/defrag/transaction_regressions.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-transaction_regressions"
+    ],
+    "exit": 0,
+    "seconds": 0.749
+  },
+  {
+    "name": "negative",
+    "argv": [
+      "python3",
+      "tests/defrag/negative.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-negative"
+    ],
+    "exit": 0,
+    "seconds": 3.328
+  },
+  {
+    "name": "upstream",
+    "argv": [
+      "python3",
+      "tests/defrag/upstream.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-upstream"
+    ],
+    "exit": 0,
+    "seconds": 1.658
+  }
+]

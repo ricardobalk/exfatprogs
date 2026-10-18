@@ -1,0 +1,89 @@
+{
+  "status": "PASS",
+  "scope": "experimental Linux images; block devices remain unqualified",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "/usr/bin/python3",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/tests/defrag/build.py",
+        "--baseline",
+        "--out",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "seconds": 8.586
+    },
+    {
+      "name": "baseline",
+      "argv": [
+        "/usr/bin/python3",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/tests/defrag/regressions.py",
+        "--binary",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/defrag.original",
+        "--mkfs",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/mkfs.exfat",
+        "--fault",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/fault.so",
+        "--out",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/baseline",
+        "--baseline"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "seconds": 1.044
+    },
+    {
+      "name": "regressions",
+      "argv": [
+        "/usr/bin/python3",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/tests/defrag/regressions.py",
+        "--binary",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/defrag.exfat",
+        "--mkfs",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/mkfs.exfat",
+        "--fault",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native/fault.so",
+        "--out",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/regressions"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "seconds": 1.072
+    },
+    {
+      "name": "negative",
+      "argv": [
+        "/usr/bin/python3",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/tests/defrag/negative.py",
+        "--build",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native",
+        "--out",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/negative"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "seconds": 3.261
+    },
+    {
+      "name": "model",
+      "argv": [
+        "/usr/bin/python3",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/tests/defrag/run.py",
+        "--build",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/native",
+        "--cases",
+        "3",
+        "--operations",
+        "100",
+        "--out",
+        "/home/user/Projects/GitHub/ricardobalk/exfatprogs/build-defrag-tests-final/qualification-smoke-final-proof/model"
+      ],
+      "exit": 0,
+      "status": "PASS",
+      "seconds": 1.625
+    }
+  ],
+  "seconds": 15.589
+}

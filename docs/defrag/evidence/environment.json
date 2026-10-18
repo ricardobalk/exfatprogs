@@ -1,0 +1,104 @@
+{
+  "base": "1647ed54299ae8c4343a5edf40b892307f7e6459",
+  "branch": "fix/exfat-defrag",
+  "client_date": "2026-10-18",
+  "timezone": "Europe/London",
+  "platform": "Linux-6.18.51-1.qubes.fc41.x86_64-x86_64-with-glibc2.41",
+  "python": "3.13.5 (main, Aug 10 2026, 12:06:59) [GCC 14.2.0]",
+  "dependencies": [
+    {
+      "argv": [
+        "cc",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "cc (Debian 14.2.0-19) 14.2.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "pkg-config",
+        "--modversion",
+        "blkid"
+      ],
+      "exit": 0,
+      "stdout": "2.41.5",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "autoconf",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "autoconf (GNU Autoconf) 2.72\nCopyright (C) 2023 Free Software Foundation, Inc.\nLicense GPLv3+/Autoconf: GNU GPL version 3 or later\n<https://gnu.org/licenses/gpl.html>, <https://gnu.org/licenses/exceptions.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by David J. MacKenzie and Akim Demaille.",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "automake",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "automake (GNU automake) 1.17\nFeatures: subsecond-mtime\n\nCopyright (C) 2024 Free Software Foundation, Inc.\nLicense GPLv2+: GNU GPL version 2 or later\n  <https://gnu.org/licenses/gpl-2.0.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by Tom Tromey <tromey@redhat.com>\n       and Alexandre Duret-Lutz <adl@gnu.org>.",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "tar",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "tar (GNU tar) 1.35\nCopyright (C) 2023 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by John Gilmore and Jay Fenlason.",
+      "stderr": ""
+    }
+  ],
+  "sanitizer_options": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+  },
+  "missing_evidence": [],
+  "source_sha256": {
+    "defrag/defrag.c": "ed2156e39b1994c3b81aee1942104e19b6b2110e2a6c65ebcbc21507c411e897",
+    "defrag/defrag.exfat": "8233912b31ebe6e37190f88b00c908c7d783994d0f2a0bb21e6330bf3dca390c",
+    "defrag/defrag.h": "2640e5ce7f6ced8b074b074d31cc54ddc90677d29977ce7fc6dada6ad21a0636",
+    "defrag/image_defrag.py": "62bf820de63b18d645ad88e5f322799be8daa19a7fe2ee0c6bc143a70662c0c4",
+    "defrag/layout.py": "8aefb8a9f49d20941f7dc0ec36d62c323df75932091ff02e834654b41b44c669",
+    "tests/defrag/build.py": "a15dd619f36f98e94ae8a156c3ed19cb10bed72415a0b8ead36e0674916387d5",
+    "tests/defrag/collect.py": "9a133118081ec22a9ed184488140d53ebcedf0b29b8fed660e1562d5e5bd529e",
+    "tests/defrag/defrag_image.py": "8ff801605b722e82ada7cbef88950475c87f15eee39a128166904ed251ad986e",
+    "tests/defrag/fault.c": "62f0a70d2fcf2ee9a8bcbd5f1269cb03a0440bde212ae523d9b29f4c03d3b7f5",
+    "tests/defrag/faults.py": "a5d16eee28c7ac10042ef18ee7b96b8b8788b0fbcd3b66990a69535ce325b3db",
+    "tests/defrag/image.py": "2f22410d2a5306afb6fbf13fd875c78a327ed3ef0af44d7cf9e0a7d34863b156",
+    "tests/defrag/matrix.py": "b2f132ed06968a9a33a4b5a6150ce69551575fb010b9d19f21df1945803d3a1c",
+    "tests/defrag/metadata.py": "94296c88babcbf2ebfcace408fa1eed07597f79ccecd8183d119760f30556190",
+    "tests/defrag/minimize.py": "6b840a19ae3b7012bef3bef751dd417b17b756f5e5df66594ca505da42e19e7f",
+    "tests/defrag/mounted.py": "2d84ad4888a136dea1164ec848b64c02b57dde7cf4a4aef41e8c34072931426a",
+    "tests/defrag/negative.py": "2f3bc50abe050971c1497a9273126e771a777236403f924feff486d5d33e414b",
+    "tests/defrag/parallel.py": "b92c5224cdca5beb9f2938a9a9160457c65a5b91ad1a9b1a9e8651eb4515db19",
+    "tests/defrag/persistence.py": "7a4729899e5aa729005f5526b78358ee61a4ea8c64d16a2600228675edd9724c",
+    "tests/defrag/publication.py": "730ba83d7ff709d495c4cec1882a889a4535edf94f853b1615b3b628def2c148",
+    "tests/defrag/qualify.py": "4b9bf8a0962e8561501d7bbb92449e802307594ffe55793db23ffbfa2c7f274d",
+    "tests/defrag/regressions.py": "a82bc7f926c27a730249de6d65ec306da27f88614d4920b2bcb31f3865da0303",
+    "tests/defrag/run.py": "f6c01b5d80b79f4e9987a290e816ed8bf7862b9fe41f7123ecee94de7fdaed5c",
+    "tests/defrag/transaction_regressions.py": "76c438610ca8f1bd956e99d6704dc945fad304c602d52b30046621b4212b1c99",
+    "tests/defrag/upstream.py": "ed6c822b05e73cd24637aeae639388d7af843e9ca6aa3b0bcfad5ae0b9770561"
+  },
+  "context_patch_sha256": {
+    "context/exfat-defrag-integrity/exfat-defrag-integrity.patch": "bbbc7470b4d4fbbe24110ab2e6a4fc346eb0ad7945f3cc20a2d1c180da0db50c",
+    "context/exfat-defrag-documentatie/patches/exfat-defrag-integrity.patch": "bbbc7470b4d4fbbe24110ab2e6a4fc346eb0ad7945f3cc20a2d1c180da0db50c"
+  },
+  "binary_sha256": {
+    "build-defrag-tests-final/defrag.exfat": "4059683fd35d3189e380ffa0cafb71deb9190fa2e3a8f67682c3bc65dbc1ec41",
+    "build-defrag-tests-final/defrag.original": "b3c1e2495b9ef2e84304d2c34788993f26caf349d8beb567933c1a8debbdb2bd",
+    "build-defrag-tests-final/dump.exfat": "b0ab5d91a86326a39505bd0fbcf5455720e508dd92f7cd21d5ad10cc6343deca",
+    "build-defrag-tests-final/fault.so": "0d16c469623d9d7cbea8e67f71be5c82b1955672fa75ec608b5b9cb6ccc78549",
+    "build-defrag-tests-final/fsck.exfat": "53aa8eda212e3e07eac1b4a8f116ad16c33c929003d758e0945d4398d1a4605e",
+    "build-defrag-tests-final/mkfs.exfat": "4b3366d076e5ab5fecd3a68a9c0a3b9dbe63e4da9521b00a52ed362c7087df9b",
+    "build-defrag-tests-sanitize-final/defrag.exfat": "d77302ed8be0ee3251105f89ddf8be01e2613a5c19e2b37baf9440e584ff2e53",
+    "build-defrag-tests-sanitize-final/dump.exfat": "e76bc23106214ae4d419dce6fcbb0626f47e8f2cc15f17f74e9c75157b25208c",
+    "build-defrag-tests-sanitize-final/fault.so": "0d16c469623d9d7cbea8e67f71be5c82b1955672fa75ec608b5b9cb6ccc78549",
+    "build-defrag-tests-sanitize-final/fsck.exfat": "bfd5825374c27f598e495558c005b275f7590987a7546c7d5cbbe106489cca13",
+    "build-defrag-tests-sanitize-final/mkfs.exfat": "29a6620e30e290be91005eeaa0e7bc5c59288c8db9a6b52a9837d8d852f8c6df"
+  }
+}

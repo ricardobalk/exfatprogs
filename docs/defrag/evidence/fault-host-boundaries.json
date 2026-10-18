@@ -1,0 +1,237 @@
+[
+  {
+    "position": 1,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 2,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 3,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 4,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 5,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 6,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 7,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 8,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 9,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 10,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 11,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 12,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 13,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 14,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 15,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 16,
+    "event": "journal.preimage.write",
+    "injected": null
+  },
+  {
+    "position": 17,
+    "event": "journal.preimage.sync",
+    "injected": null
+  },
+  {
+    "position": 18,
+    "event": "journal.manifest.write",
+    "injected": null
+  },
+  {
+    "position": 19,
+    "event": "journal.manifest.sync",
+    "injected": null
+  },
+  {
+    "position": 20,
+    "event": "journal.prepare.dir.sync",
+    "injected": null
+  },
+  {
+    "position": 21,
+    "event": "journal.prepare.parent.sync",
+    "injected": null
+  },
+  {
+    "position": 22,
+    "event": "image.token.set",
+    "injected": null
+  },
+  {
+    "position": 23,
+    "event": "image.token.sync",
+    "injected": null
+  },
+  {
+    "position": 24,
+    "event": "engine.start",
+    "injected": null
+  },
+  {
+    "position": 25,
+    "event": "engine.finished",
+    "injected": null
+  },
+  {
+    "position": 26,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 27,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 28,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 29,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 30,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 31,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 32,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 33,
+    "event": "image.inspect.read",
+    "injected": null
+  },
+  {
+    "position": 34,
+    "event": "image.result.sync",
+    "injected": null
+  },
+  {
+    "position": 35,
+    "event": "journal.commit.tmp.write",
+    "injected": null
+  },
+  {
+    "position": 36,
+    "event": "journal.commit.tmp.sync",
+    "injected": null
+  },
+  {
+    "position": 37,
+    "event": "journal.commit.rename",
+    "injected": null
+  },
+  {
+    "position": 38,
+    "event": "journal.commit.dir.sync",
+    "injected": null
+  },
+  {
+    "position": 39,
+    "event": "image.token.remove",
+    "injected": null
+  },
+  {
+    "position": 40,
+    "event": "image.token.remove.sync",
+    "injected": null
+  },
+  {
+    "position": 41,
+    "event": "journal.cleanup.commit.tmp",
+    "injected": null
+  },
+  {
+    "position": 42,
+    "event": "journal.cleanup.commit",
+    "injected": null
+  },
+  {
+    "position": 43,
+    "event": "journal.cleanup.manifest",
+    "injected": null
+  },
+  {
+    "position": 44,
+    "event": "journal.cleanup.preimage",
+    "injected": null
+  },
+  {
+    "position": 45,
+    "event": "journal.cleanup.dir.sync",
+    "injected": null
+  },
+  {
+    "position": 46,
+    "event": "journal.cleanup.rmdir",
+    "injected": null
+  },
+  {
+    "position": 47,
+    "event": "journal.cleanup.parent.sync",
+    "injected": null
+  }
+]

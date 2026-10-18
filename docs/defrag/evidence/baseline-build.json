@@ -1,0 +1,5 @@
+{
+  "commit": "1647ed54299ae8c4343a5edf40b892307f7e6459",
+  "shared_patched_sources": false,
+  "adaptation": "add zero sector offset argument to exfat_write_checksum_sector"
+}

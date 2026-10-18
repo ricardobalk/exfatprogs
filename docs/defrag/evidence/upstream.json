@@ -1,0 +1,175 @@
+{
+  "status": "PASS",
+  "sanitizers": null,
+  "cases": [
+    {
+      "case": "tests/2tb_disk/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_bitmap/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_bitmap_size/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_dentries/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_dentries2/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_file_size/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_first_clu/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_num_chain/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bad_root/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/bs_bad_csum/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/clu_count_overflow/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/de_bad_csum/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/duplicate_clu/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/duplicated_name/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/file_invalid_clus/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/invalid_name/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/large_file_invalid_clus/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/loop_chain/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/rename_dot_entry/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/unused-dentries/exfat.img.tar.xz",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/upcase_table/0001-TableChecksum-and-upcase-table.sh",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/upcase_table/0002-FirstCluster.sh",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/upcase_table/0003-DataLength.sh",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    },
+    {
+      "case": "tests/upcase_table/0004-EntryType.sh",
+      "status": "PASS",
+      "detect_exit": 4,
+      "repair_exit": 1,
+      "verify_exit": 0
+    }
+  ],
+  "seconds": 1.615
+}

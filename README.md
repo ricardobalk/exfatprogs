@@ -126,3 +126,11 @@ If you have any issues, please create [issues][1] or contact to [exfat mailing l
 * Please base your pull requests on the `exfat-next` branch.
 * Make sure you add 'Signed-Off' information to your commits (e.g. `git commit --signoff`).
 * Please check your code contribution using kernel dev-tool script [checkpatch](https://docs.kernel.org/dev-tools/checkpatch.html).
+
+## Experimental defragmentation
+
+The normal build keeps defrag disabled. The restored worker, journaled Linux
+image interface, independent validation, reproducible tests and release limits
+are documented in [docs/defrag/README.md](docs/defrag/README.md). The experimental
+interface accepts small offline regular volume images; direct blockdevice use
+is not qualified. Start with `python3 tests/defrag/qualify.py --out defrag-test-results-smoke`.

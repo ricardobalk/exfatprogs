@@ -1,90 +1,69 @@
 .TH defrag.exfat 8
 .SH NAME
-defrag.exfat \- Defragment or assess fragmentation on an exFAT filesystem
-
+defrag.exfat \- experimental journaled offline exFAT image defragmentation
 .SH SYNOPSIS
-.B defrag.exfat
-[\fB\-f\fR | \fB\-a\fR]
-.I device
-.P
-.B defrag.exfat
-\fB\-h\fR | \fB\-\-help\fR
-.P
-.B defrag.exfat
-\fB\-v\fR | \fB\-\-version\fR
-
+.B defrag/defrag.exfat
+.B --dry-run
+.I image
+.PP
+.B defrag/defrag.exfat
+.I image
+.B --journal
+.I new-directory
+.PP
+.B defrag/defrag.exfat
+.I image
+.B --recover --journal
+.I original-directory
 .SH DESCRIPTION
-.B defrag.exfat
-is a utility to defragment files on an exFAT-formatted device or assess its fragmentation status.
-
-When no option is specified, the tool warns the user to run \fBfsck.exfat\fR first for filesystem consistency.
-
-This safety prompt can be bypassed using the \fB\-f\fR option.
-
-The \fB\-a\fR option enables assessment mode, which analyzes fragmentation without modifying the filesystem.
-
-\fBdefrag.exfat\fR provides whole-disk defragmentation based on cluster swapping, which incurs a certain amount of wear overhead on flash-based storage devices with low fragmentation levels.
-
-Therefore, it is recommended to use \fBdefrag.exfat\fR on mechanical hard disk drives (HDDs) or flash-based devices that exhibit a relatively high degree of fragmentation.
-
+This experimental image interface is not installed by the normal build.
+It accepts Linux regular single-volume images up to 256 MiB, with one FAT,
+no loop attachment, and the support restrictions in docs/defrag/README.md.
+Block devices, TexFAT, unknown allocated entries and bad-cluster layouts are
+rejected before filesystem writes.
+.PP
+Analysis is read-only. Writes require a new private external journal containing
+a full durable preimage, bound to the image inode and a transaction token.
+After a failure or kill, retain the image and original journal and use
+.BR --recover .
+A missing or corrupt journal is not guessed around.
+.PP
+The explicitly built C binary in build-defrag-tests is an internal unjournaled
+worker. Invoking it directly bypasses the recovery protocol.
 .SH OPTIONS
 .TP
-.B \-f, \-\-force
-Perform defragmentation without prompting the fsck warning. Use with caution.
+.B --dry-run, -a
+Report allocation discontinuities, extents, feasibility and scope limits as JSON.
 .TP
-.B \-a, \-\-assessment
-Assess the fragmentation status of the exFAT volume without making any changes.
+.B --journal directory
+New private journal directory for an operation, or the original directory for recovery.
 .TP
-.B \-v, \-\-version
-Display version information and exit.
+.B --recover
+Resolve an active transaction using verified undo data or a valid commit record.
 .TP
-.B \-h, \-\-help
-Show usage information and exit.
-
-.SH EXAMPLES
-.PP
-Defragment an unmounted exFAT device (with safety warning):
-.EX
-$ defrag.exfat /dev/sda1
-.EE
-
-.PP
-Defragment without prompting (force mode):
-.EX
-$ defrag.exfat -f /dev/sda1
-.EE
-
-.PP
-Assess fragmentation status (read-only):
-.EX
-$ defrag.exfat -a /dev/sda1
-.EE
-
-.PP
-Show version:
-.EX
-$ defrag.exfat -v
-.EE
-
-.PP
-Show help:
-.EX
-$ defrag.exfat -h
-.EE
-
+.B --engine path
+Select the internal worker; default build-defrag-tests/defrag.exfat.
+.TP
+.B --fsck path
+Select the independent checker; default build-defrag-tests/fsck.exfat.
+.TP
+.B -h, --help
+Show all arguments. Fault and trace options are explicit qualification interfaces.
+.SH EXIT STATUS
+0: verified completion, analysis, no-op or recovery.
+1: stopped without an active transaction.
+2: invalid arguments.
+3: recovery required; retain recovery data.
+4: committed but cleanup/durability confirmation incomplete.
+130/143: SIGINT/SIGTERM; the reported state is old after rollback, or new if
+cancellation arrived during the commit batch.
 .SH NOTES
-Before defragmentation:
-.IP -
-The target device must be \fBunmounted\fR.
-.IP -
-Please run \fBfsck.exfat\fR on the target device to ensure filesystem integrity.
-.IP -
-Considering the potential risks of defragmentation, critical data should be \fBbacked up\fR in advance.
+Locks are advisory. Visible loop attachments are detected; exclusive access
+across other mount namespaces or noncooperating writers cannot be guaranteed.
+The storage model assumes truthful successful fsync and durable journal storage.
+This is not a qualification for direct use on user volumes.
 .PP
-
-During defragmentation:
-.IP -
-Always keep the device \fBconnected and powered\fR.
-.IP -
-If the device is removed, powered off, or experiences a hardware failure, the filesystem may become corrupted.
-.PP
+The additional tests/defrag/defrag_image.py workflow opens its source read-only,
+verifies a private candidate independently, and publishes with an atomic
+no-replace hard link. Failure after that link may leave visible valid output.
+See docs/defrag/README.md and its ADRs for exact recovery and publication rules.

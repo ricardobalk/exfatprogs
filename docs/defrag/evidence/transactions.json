@@ -1,0 +1,20 @@
+[
+  {
+    "case": "directory-flush",
+    "status": "PASS",
+    "exit": 3,
+    "sha256_equal": true
+  },
+  {
+    "case": "parent-kill",
+    "status": "PASS",
+    "exit": -9,
+    "sha256_equal": true
+  },
+  {
+    "case": "journal-fifo",
+    "status": "PASS",
+    "exit": 3,
+    "sha256_equal": true
+  }
+]

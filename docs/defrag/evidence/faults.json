@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "cases": 651,
+  "hit_faults": 646,
+  "seconds": 215.857,
+  "worker_write_boundaries": 67
+}

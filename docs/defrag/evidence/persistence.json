@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "model": "durable journal and token; arbitrary volatile image write loss/reordering/tears before commit",
+  "worker_writes": 67,
+  "worker_flushes": 1,
+  "cases": 154,
+  "requested_cases": 154,
+  "seconds": 55.101
+}

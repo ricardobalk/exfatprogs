@@ -1,0 +1,185 @@
+[
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/build.py",
+      "--out",
+      "build-defrag-tests-final",
+      "--baseline"
+    ],
+    "exit": 0,
+    "sanitizers": false
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/parallel.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--cases",
+      "1000",
+      "--operations",
+      "5000",
+      "--jobs",
+      "4",
+      "--out",
+      "build-defrag-tests-final/qualification-model"
+    ],
+    "exit": 0,
+    "sanitizers": false
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/matrix.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-matrix"
+    ],
+    "exit": 0,
+    "sanitizers": false
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/negative.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-negative-fifo"
+    ],
+    "exit": 0,
+    "sanitizers": false
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/transaction_regressions.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--out",
+      "build-defrag-tests-final/qualification-transactions-fifo"
+    ],
+    "exit": 0,
+    "sanitizers": false
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/build.py",
+      "--out",
+      "build-defrag-tests-sanitize-final",
+      "--sanitize"
+    ],
+    "exit": 0,
+    "sanitizers": true
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/parallel.py",
+      "--build",
+      "build-defrag-tests-sanitize-final",
+      "--cases",
+      "1000",
+      "--operations",
+      "5000",
+      "--jobs",
+      "4",
+      "--out",
+      "build-defrag-tests-sanitize-final/qualification-model"
+    ],
+    "exit": 0,
+    "sanitizers": true
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/matrix.py",
+      "--build",
+      "build-defrag-tests-sanitize-final",
+      "--out",
+      "build-defrag-tests-sanitize-final/qualification-matrix"
+    ],
+    "exit": 0,
+    "sanitizers": true
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/negative.py",
+      "--build",
+      "build-defrag-tests-sanitize-final",
+      "--out",
+      "build-defrag-tests-sanitize-final/qualification-negative-fifo"
+    ],
+    "exit": 0,
+    "sanitizers": true
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/transaction_regressions.py",
+      "--build",
+      "build-defrag-tests-sanitize-final",
+      "--out",
+      "build-defrag-tests-sanitize-final/qualification-transactions-fifo"
+    ],
+    "exit": 0,
+    "sanitizers": true
+  },
+  {
+    "argv": [
+      "sudo",
+      "-n",
+      "python3",
+      "tests/defrag/mounted.py",
+      "--build",
+      "build-defrag-tests-final",
+      "--seeds",
+      "10",
+      "--operations",
+      "5000",
+      "--out",
+      "build-defrag-tests-final/qualification-driver"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "python3",
+      "tests/defrag/qualify.py",
+      "--out",
+      "build-defrag-tests-final/qualification-smoke-final-proof"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "./autogen.sh"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "./configure",
+      "--enable-tests"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "make",
+      "-j4"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "make",
+      "check"
+    ],
+    "exit": 0
+  }
+]
