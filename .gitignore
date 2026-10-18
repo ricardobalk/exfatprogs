@@ -50,3 +50,9 @@ autom4te.cache
 /tune/tune.exfat
 /dosattr/lsdosattr
 /dosattr/chdosattr
+
+# Explicit experimental defrag builds and retained test artifacts
+/build-defrag-tests*/
+/defrag-test-results*/
+__pycache__/
+*.pyc
