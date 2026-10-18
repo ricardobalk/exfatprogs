@@ -77,9 +77,23 @@ a reproducible starting point; reduction is open work.
 
 ## GitHub Actions artifacts
 
-`.github/workflows/resize.yml` uploads test output with `if: always()`, so a
-failed campaign retains the reports and synthetic failure fixtures that were
-created before the failure. The artifacts are:
+`.github/workflows/resize.yml` converts every recorded JSON case to JUnit XML.
+Each job summary first shows a short `What`, `Why`, `Where`, and `If it failed`
+table in technical English. A pinned test-reporter action then publishes the
+JUnit cases as a GitHub Check with per-suite totals, case names, durations,
+skips, and failure evidence. Repeated model and fault cases include their seed,
+geometry, direction, fault mode, or reached boundary in the displayed name.
+
+The converter also creates a failing `campaign completion` case when a runner
+records an incomplete or failed campaign without a failed child row. If no
+`results.json` exists, it creates a failing report-availability case. This
+keeps an early build or test-runner failure visible in the GitHub presentation.
+Pull requests from forks still receive the job summary and XML artifact, but
+the Check publication is skipped because their token cannot write checks.
+
+The workflow uploads test output with `if: always()`, so a failed campaign
+retains the JUnit report, source reports, and synthetic failure fixtures that
+were created before the failure. The artifacts are:
 
 - `resize-image-test-output` for image, fault, signal, and checker tests;
 - `resize-sanitizer-test-output` for native and checker sanitizer tests;
@@ -90,6 +104,12 @@ with `full` selected use 1,000 seeds. The privileged driver job runs only when a
 manual workflow dispatch selects `driver`. Artifacts are retained for seven
 days. A result applies only to the exact source revision identified by its
 workflow run and generated report; an older PASS does not qualify changed code.
+
+The conversion itself is covered by `tests/test_junit_report.py`. Run it with:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_junit_report.py' -v
+```
 
 Physical power-loss qualification, a persistent cache/write-order model, broad
 vendor/GUID combinations, and very large real images remain open. No production
