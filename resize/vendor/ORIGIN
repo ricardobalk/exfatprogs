@@ -1,0 +1,10 @@
+Project: https://github.com/huven/exfat-resize
+Commit: 870ca5a66591405cd536556b1114d045c94cefff
+License: MIT (see LICENSE)
+Copyright: Richard Huveneers, 2026
+
+Imported C engine, public header, library tests, and API/transaction documents.
+Local changes: read-only planning API and plan statistics. See the enclosing
+project's Git history. The original engine has no durable rollback protocol.
+The exfatprogs image transaction host supplies that protocol. The original
+CLI, device interfaces, and partition interfaces are not included.

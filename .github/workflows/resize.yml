@@ -1,0 +1,95 @@
+name: Experimental image resize
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run 1000 model seeds with 5000 iterations each
+        type: boolean
+        default: false
+      driver:
+        description: Run privileged disposable loop-image qualification
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 3 * * 0'
+permissions:
+  contents: read
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODEL_SEEDS: ${{ (github.event_name == 'schedule' || inputs.full) && '1000' || '28' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install build and test tools
+        run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkgconf libblkid-dev python3 xxd
+      - name: Build
+        run: ./autogen.sh && ./configure --enable-tests --enable-experimental-resize && make -j2
+      - name: Existing regressions with checked exit status
+        run: |
+          make -C lib check
+          python3 resize/tests/regressions.py --output resize/evidence/upstream
+      - name: Check combined cancellation, commit error, and interrupted undo
+        run: python3 resize/tests/cancel_commit.py --output resize/evidence/compound-cancel
+      - name: Model images and complete small-fixture fault sweep
+        run: |
+          python3 resize/tests/run.py --seeds "$MODEL_SEEDS" --iterations 5000 \
+            --jobs 2 --faults --output resize/evidence/images
+      - name: Reject partitioned and MBR hybrid images before writes
+        run: python3 resize/tests/container.py --output resize/evidence/containers
+      - name: Check inactive FAT entries and reader counterexamples
+        run: python3 resize/tests/nofat.py --output resize/evidence/inactive-fat
+      - name: Sample faults on larger real images
+        run: python3 resize/tests/large_faults.py --output resize/evidence/large-faults
+      - name: Reproduce checker defects on the exact baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=$(mktemp -d)
+          git archive 1647ed54299ae8c4343a5edf40b892307f7e6459 | tar -x -C "$baseline"
+          (cd "$baseline" && ./autogen.sh && ./configure && make -j2)
+          python3 resize/tests/fsck_regression.py --baseline "$baseline/fsck/fsck.exfat" \
+            --output resize/evidence/counterexamples
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resize-image-evidence
+          path: resize/evidence/
+          retention-days: 7
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkgconf libblkid-dev python3 xxd
+      - run: ./autogen.sh && ./configure --enable-tests --enable-experimental-resize && make -j2
+      - run: python3 resize/tests/run.py --sanitize --library-only --output resize/evidence/sanitizers
+      - run: python3 resize/tests/regressions.py --sanitize --output resize/evidence/fsck-sanitizers
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resize-sanitizer-evidence
+          path: resize/evidence/
+  driver:
+    if: github.event_name == 'workflow_dispatch' && inputs.driver
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkgconf libblkid-dev python3
+      - run: ./autogen.sh && ./configure --enable-tests --enable-experimental-resize && make -j2
+      - run: sudo modprobe exfat
+      - name: Linux driver, ten seeds and 5000 real workload iterations per seed
+        run: |
+          sudo python3 resize/tests/driver.py --require --seeds 10 --iterations 5000 \
+            --output resize/evidence/driver
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resize-driver-evidence
+          path: resize/evidence/

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+import pathlib
+import os
+import sys
+here = pathlib.Path(__file__).resolve().parent
+if (here / ".libs/libresize-image.so").exists():
+    os.environ.setdefault("RESIZE_LIBRARY", str(here / ".libs/libresize-image.so"))
+    module_dir = pathlib.Path("@RESIZE_SOURCE_DIR@")
+else:
+    module_dir = pathlib.Path("@RESIZE_MODULE_DIR@")
+sys.path.insert(0, str(module_dir))
+from image_resize import main
+sys.exit(main())

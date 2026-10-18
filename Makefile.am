@@ -3,6 +3,10 @@
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = lib mkfs fsck tune label dump exfat2img upcase dosattr
+DIST_SUBDIRS = lib mkfs fsck tune label dump exfat2img upcase dosattr resize
+if ENABLE_RESIZE
+SUBDIRS += resize
+endif
 
 # manpages
 dist_man1_MANS =
@@ -13,6 +17,10 @@ dist_man8_MANS =		\
 	manpages/exfatlabel.8	\
 	manpages/dump.exfat.8	\
 	manpages/exfat2img.8
+
+if ENABLE_RESIZE
+dist_man8_MANS += manpages/resize.exfat.8
+endif
 
 # other stuff
 EXTRA_DIST =			\
@@ -26,6 +34,7 @@ EXTRA_DIST =			\
 	label/Android.bp	\
 	dump/Android.bp		\
 	exfat2img/Android.bp	\
+	docs/resize		\
 	README.md
 
 if ENABLE_DOSATTR

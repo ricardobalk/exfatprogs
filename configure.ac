@@ -20,6 +20,16 @@ AC_LANG([C])
 AC_PROG_CC
 AM_SILENT_RULES([yes])
 LT_INIT
+
+AC_ARG_ENABLE([experimental-resize],
+    AS_HELP_STRING([--enable-experimental-resize], [build the experimental Linux image resizer]),
+    [], [enable_experimental_resize=no])
+AM_CONDITIONAL([ENABLE_RESIZE], [test "x$enable_experimental_resize" = xyes])
+AS_IF([test "x$enable_experimental_resize" = xyes], [
+    AS_CASE([$host_os], [linux*], [], [AC_MSG_ERROR([experimental resize requires Linux])])
+    AS_IF([test "x$enable_shared" = xno], [AC_MSG_ERROR([experimental resize requires shared libraries])])
+    AM_PATH_PYTHON([3.9])
+])
 AC_SYS_LARGEFILE
 AC_C_BIGENDIAN
 
@@ -34,6 +44,7 @@ AC_CONFIG_FILES([
 	exfat2img/Makefile
 	upcase/Makefile
 	dosattr/Makefile
+	resize/Makefile
 ])
 
 AC_CHECK_HEADERS([fts.h], [have_fts_h="yes"])

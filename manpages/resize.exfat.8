@@ -1,0 +1,76 @@
+.TH RESIZE.EXFAT 8 "October 2026" "exfatprogs" "System Administration"
+.SH NAME
+resize.exfat \- experimental offline resize of an exFAT volume image
+.SH SYNOPSIS
+.B resize.exfat
+.I image
+.B --size
+.I size
+.RB [ --dry-run ]
+.RB [ --journal
+.IR directory ]
+.br
+.B resize.exfat
+.I image
+.B --info
+.br
+.B resize.exfat
+.I image
+.B --recover --journal
+.I directory
+.SH DESCRIPTION
+This experimental command grows or shrinks a regular exFAT volume image.
+It does not change the container length or a partition table.
+Direct block devices are disabled.
+Prevent all other access. The file lock is advisory.
+Visible Linux loop attachments are checked. Other namespaces and races can
+limit this check.
+.SH SIZE
+Use an unsigned integer with B, KiB, MiB, GiB, or TiB.
+The command rounds down to a whole filesystem sector.
+It retains the cluster size. An equal rounded size is a checked no-op.
+The filesystem must be at least 1 MiB. Metadata and retained allocations
+can require a larger minimum. Use dry-run to check the target.
+.SH OPTIONS
+.TP
+.B --dry-run
+Run full read-only preflight. Print JSON geometry, relocation bounds, and
+journal space. A shrink move count is exact. A growth move count is the
+displaced prefix size and can include free clusters.
+.TP
+.B --info
+Validate the current geometry and print its plan without writes.
+.TP
+.B --journal directory
+Use a new directory for the external undo journal. Its parent must exist.
+Reserve free space for the complete backing file plus 1 MiB.
+The directory has mode 0700. Journal files have mode 0600 and contain file data.
+The target must support user xattrs. Do not copy or delete an active journal.
+.TP
+.B --recover
+Validate the journal and target identity. Restore the original image unless
+a valid commit record selects the complete new image. Recovery can repeat
+after interruption. A missing or corrupt journal cannot authorize writes.
+Do not mount an image with an active transaction token.
+.SH EXIT STATUS
+0: complete operation, valid plan, or completed recovery.
+1: rejected input or failure without an active journal.
+2: invalid command syntax.
+3: active transaction; recovery is required.
+4: committed image; cleanup did not complete.
+130: handled cancellation. See the error message for the recovery state.
+.SH LIMITS
+Support is limited to Linux regular volume images at byte zero, exFAT revision
+1.00, one FAT, and unchanged cluster size. TexFAT and unknown allocated entries
+are rejected. A full old bitmap must fit during shrink. Growth needs space
+for a new bitmap. Physical power-loss durability and direct devices are not
+qualified. See docs/resize/README.md for support and test status.
+.SH RECOVERY
+Keep the backing file at its original length. Use the same file inode and
+journal directory with --recover. If validation fails, stop and retain both.
+A journal without a matching image token is stale. It must not be replayed.
+After a cleanup failure with no image token, verify the image with fsck.exfat -n
+and the independent reader before you remove the stale journal manually.
+.SH SEE ALSO
+.BR fsck.exfat (8),
+.BR mkfs.exfat (8)

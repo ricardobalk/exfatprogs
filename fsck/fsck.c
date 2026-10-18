@@ -1018,13 +1018,49 @@ static int read_file(struct exfat_de_iter *de_iter,
 	return ret;
 }
 
+/* System streams use FAT chains (exFAT specification 7.1 and 7.2).
+ * Do not infer contiguity from their directory entry format. */
+static int read_system_chain(struct exfat *exfat, clus_t first, void *buffer, size_t size,
+			     bool claim)
+{
+	clus_t cluster = first, next;
+	size_t done = 0, chunk;
+	unsigned int i;
+	bitmap_t *seen = (bitmap_t *)exfat->ohead_bitmap;
+	bitmap_t *owned = (bitmap_t *)exfat->alloc_bitmap;
+
+	memset(seen, 0, EXFAT_BITMAP_SIZE(exfat->clus_count));
+	while (done < size) {
+		if (!exfat_heap_clus(exfat, cluster) ||
+		    exfat_bitmap_get((unsigned char *)seen, cluster) ||
+		    exfat_bitmap_get(exfat->alloc_bitmap, cluster))
+			return -EINVAL;
+		exfat_bitmap_set((unsigned char *)seen, cluster);
+		chunk = MIN(size - done, exfat->clus_size);
+		if (!exfat_read_full(exfat->blk_dev->dev_fd, (char *)buffer + done, chunk,
+				     exfat_c2o(exfat, cluster)))
+			return -EIO;
+		if (exfat_get_next_clus(exfat, cluster, &next))
+			return -EIO;
+		done += chunk;
+		if (done == size && next != EXFAT_EOF_CLUSTER)
+			return -EINVAL;
+		cluster = next;
+	}
+	if (claim) {
+		for (i = 0; i < EXFAT_BITMAP_SIZE(exfat->clus_count) / sizeof(bitmap_t); i++)
+			owned[i] |= seen[i];
+	}
+	return 0;
+}
+
 static int read_bitmap(struct exfat *exfat)
 {
 	struct exfat_lookup_filter filter = {
-		.in.type	= EXFAT_BITMAP,
-		.in.dentry_count = 0,
-		.in.filter	= NULL,
-		.in.param	= NULL,
+	    .in.type = EXFAT_BITMAP,
+	    .in.dentry_count = 0,
+	    .in.filter = NULL,
+	    .in.param = NULL,
 	};
 	struct exfat_dentry *dentry;
 	uint64_t map_size, need_map_size;
@@ -1035,16 +1071,15 @@ static int read_bitmap(struct exfat *exfat)
 		return retval;
 
 	dentry = filter.out.dentry_set;
-	exfat_debug("start cluster %#x, size %#" PRIx64 "\n",
-			le32_to_cpu(dentry->bitmap_start_clu),
-			le64_to_cpu(dentry->bitmap_size));
+	exfat_debug("start cluster %#x, size %#" PRIx64 "\n", le32_to_cpu(dentry->bitmap_start_clu),
+		    le64_to_cpu(dentry->bitmap_size));
 
 	/* Validate on-disk bitmap size and required size */
 	map_size = le64_to_cpu(dentry->bitmap_size);
 	need_map_size = DIV_ROUND_UP(exfat->clus_count, 8);
 	if (map_size != need_map_size &&
-		exfat_repair_ask(&exfat_fsck, ER_DE_BITMAP,
-				"ERROR: invalid bitmap size. %lld", map_size)) {
+	    exfat_repair_ask(&exfat_fsck, ER_DE_BITMAP, "ERROR: invalid bitmap size. %lld",
+			     map_size)) {
 		dentry->bitmap_size = cpu_to_le64(need_map_size);
 		if (!exfat_write_full(exfat->blk_dev->dev_fd, dentry, DENTRY_SIZE,
 				      filter.out.dev_offset)) {
@@ -1053,16 +1088,15 @@ static int read_bitmap(struct exfat *exfat)
 		}
 	}
 
-	if (le64_to_cpu(dentry->bitmap_size) <
-			DIV_ROUND_UP(exfat->clus_count, 8)) {
+	if (le64_to_cpu(dentry->bitmap_size) < DIV_ROUND_UP(exfat->clus_count, 8)) {
 		exfat_err("invalid size of allocation bitmap. 0x%" PRIx64 "\n",
-				le64_to_cpu(dentry->bitmap_size));
+			  le64_to_cpu(dentry->bitmap_size));
 		retval = -EINVAL;
 		goto out;
 	}
 	if (!exfat_heap_clus(exfat, le32_to_cpu(dentry->bitmap_start_clu))) {
 		exfat_err("invalid start cluster of allocate bitmap. 0x%x\n",
-				le32_to_cpu(dentry->bitmap_start_clu));
+			  le32_to_cpu(dentry->bitmap_start_clu));
 		retval = -EINVAL;
 		goto out;
 	}
@@ -1070,14 +1104,8 @@ static int read_bitmap(struct exfat *exfat)
 	exfat->disk_bitmap_clus = le32_to_cpu(dentry->bitmap_start_clu);
 	exfat->disk_bitmap_size = DIV_ROUND_UP(exfat->clus_count, 8);
 
-	exfat_bitmap_set_range(exfat, exfat->alloc_bitmap,
-			       le32_to_cpu(dentry->bitmap_start_clu),
-			       DIV_ROUND_UP(exfat->disk_bitmap_size,
-					    exfat->clus_size));
-	if (!exfat_read_full(exfat->blk_dev->dev_fd, exfat->disk_bitmap,
-			exfat->disk_bitmap_size,
-			exfat_c2o(exfat, exfat->disk_bitmap_clus)))
-		retval = -EIO;
+	retval = read_system_chain(exfat, exfat->disk_bitmap_clus, exfat->disk_bitmap,
+				   exfat->disk_bitmap_size, true);
 out:
 	free(filter.out.dentry_set);
 	return retval;
@@ -1199,6 +1227,12 @@ static int exfat_repair_upcase_table(struct exfat *exfat,
 		}
 	}
 
+	/* Publish the FAT chain for the new contiguous system stream. */
+	for (unsigned int i = 0; i < clu_count; i++) {
+		if (exfat_set_fat(exfat, clu + i,
+				  i + 1 < clu_count ? clu + i + 1 : EXFAT_EOF_CLUSTER))
+			return -EIO;
+	}
 	/* Allocate the clusters */
 	exfat_bitmap_set_range(exfat, exfat->alloc_bitmap, clu, clu_count);
 
@@ -1222,10 +1256,10 @@ static int exfat_repair_upcase_table(struct exfat *exfat,
 static int read_upcase_table(struct exfat_fsck *fsck)
 {
 	struct exfat_lookup_filter filter = {
-		.in.type	= EXFAT_UPCASE,
-		.in.dentry_count = 1,
-		.in.filter	= NULL,
-		.in.param	= NULL,
+	    .in.type = EXFAT_UPCASE,
+	    .in.dentry_count = 1,
+	    .in.filter = NULL,
+	    .in.param = NULL,
 	};
 	struct exfat *exfat = fsck->exfat;
 	struct exfat_dentry *dentry = NULL;
@@ -1241,8 +1275,7 @@ static int read_upcase_table(struct exfat_fsck *fsck)
 	retval = exfat_lookup_dentry_set(exfat, exfat->root, &filter);
 	if (retval == EOF) {
 		dentry_off = filter.out.dev_offset;
-		if (exfat_repair_ask(fsck, ER_DE_UPCASE,
-				"ERROR: not found upcase table entry"))
+		if (exfat_repair_ask(fsck, ER_DE_UPCASE, "ERROR: not found upcase table entry"))
 			goto repair_upcase;
 
 		retval = -EINVAL;
@@ -1256,7 +1289,8 @@ static int read_upcase_table(struct exfat_fsck *fsck)
 
 	if (!exfat_heap_clus(exfat, start_clu)) {
 		if (exfat_repair_ask(fsck, ER_DE_UPCASE,
-				"ERROR: invalid start cluster of upcase table. 0x%x", start_clu))
+				     "ERROR: invalid start cluster of upcase table. 0x%x",
+				     start_clu))
 			goto repair_upcase;
 
 		retval = -EINVAL;
@@ -1264,10 +1298,10 @@ static int read_upcase_table(struct exfat_fsck *fsck)
 	}
 
 	size = (ssize_t)le64_to_cpu(dentry->upcase_size);
-	if (size > (ssize_t)(EXFAT_MAX_UPCASE_CHARS * sizeof(__le16)) ||
-			size == 0 || size % sizeof(__le16)) {
+	if (size > (ssize_t)(EXFAT_MAX_UPCASE_CHARS * sizeof(__le16)) || size == 0 ||
+	    size % sizeof(__le16)) {
 		if (exfat_repair_ask(fsck, ER_DE_UPCASE,
-				"ERROR: invalid size of upcase table. 0x%" PRIx64, size))
+				     "ERROR: invalid size of upcase table. 0x%" PRIx64, size))
 			goto repair_upcase;
 
 		retval = -EINVAL;
@@ -1281,9 +1315,7 @@ static int read_upcase_table(struct exfat_fsck *fsck)
 		goto out;
 	}
 
-	if (!exfat_read_full(exfat->blk_dev->dev_fd, upcase, size,
-			exfat_c2o(exfat,
-			le32_to_cpu(dentry->upcase_start_clu)))) {
+	if (read_system_chain(exfat, start_clu, upcase, size, false)) {
 		exfat_err("failed to read upcase table\n");
 		retval = -EIO;
 		goto out;
@@ -1293,18 +1325,17 @@ static int read_upcase_table(struct exfat_fsck *fsck)
 	boot_calc_checksum((unsigned char *)upcase, (size_t)size, false, &checksum);
 	if (le32_to_cpu(dentry->upcase_checksum) != checksum) {
 		if (exfat_repair_ask(fsck, ER_DE_UPCASE,
-				"ERROR: corrupted upcase table %#x (expected: %#x)",
-				checksum, le32_to_cpu(dentry->upcase_checksum)))
+				     "ERROR: corrupted upcase table %#x (expected: %#x)", checksum,
+				     le32_to_cpu(dentry->upcase_checksum)))
 			goto repair_upcase;
 
 		retval = -EINVAL;
 		goto use_default;
 	}
 
-	exfat_bitmap_set_range(exfat, exfat->alloc_bitmap,
-			       le32_to_cpu(dentry->upcase_start_clu),
-			       DIV_ROUND_UP(le64_to_cpu(dentry->upcase_size),
-					    exfat->clus_size));
+	retval = read_system_chain(exfat, start_clu, upcase, size, true);
+	if (retval)
+		goto out;
 
 	valid_upcase = upcase;
 	valid_upcase_size = size;
@@ -1326,8 +1357,8 @@ use_default:
 		goto out;
 	}
 
-	decompress_upcase_table(valid_upcase, valid_upcase_size / 2,
-				exfat->upcase_table, EXFAT_UPCASE_TABLE_CHARS);
+	decompress_upcase_table(valid_upcase, valid_upcase_size / 2, exfat->upcase_table,
+				EXFAT_UPCASE_TABLE_CHARS);
 out:
 	if (dentry)
 		free(dentry);
@@ -1561,9 +1592,8 @@ static int write_bitmap(struct exfat_fsck *fsck)
 	struct exfat *exfat = fsck->exfat;
 	bitmap_t *disk_b, *alloc_b, *ohead_b;
 	off_t dev_offset;
-	unsigned int i, bitmap_bytes, byte_offset, write_bytes;
-
-	dev_offset = exfat_c2o(exfat, exfat->disk_bitmap_clus);
+	clus_t cluster, next;
+	unsigned int i, bitmap_bytes, byte_offset, write_bytes, step;
 	bitmap_bytes = EXFAT_BITMAP_SIZE(le32_to_cpu(exfat->bs->bsx.clu_count));
 
 	disk_b = (bitmap_t *)exfat->disk_bitmap;
@@ -1582,16 +1612,22 @@ static int write_bitmap(struct exfat_fsck *fsck)
 
 		byte_offset = ((i * sizeof(bitmap_t)) / 512) * 512;
 		write_bytes = MIN(512, bitmap_bytes - byte_offset);
+		cluster = exfat->disk_bitmap_clus;
+		for (step = 0; step < byte_offset / exfat->clus_size; step++) {
+			if (exfat_get_next_clus(exfat, cluster, &next) ||
+			    !exfat_heap_clus(exfat, next))
+				return -EIO;
+			cluster = next;
+		}
+		dev_offset = exfat_c2o(exfat, cluster) + byte_offset % exfat->clus_size;
 
-		if (!exfat_write_full(exfat->blk_dev->dev_fd,
-				(char *)ohead_b + byte_offset, write_bytes,
-				dev_offset + byte_offset))
+		if (!exfat_write_full(exfat->blk_dev->dev_fd, (char *)ohead_b + byte_offset,
+				      write_bytes, dev_offset))
 			return -EIO;
 
 		i = (byte_offset + write_bytes) / sizeof(bitmap_t);
 	}
 	return 0;
-
 }
 
 /*

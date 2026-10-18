@@ -50,3 +50,10 @@ autom4te.cache
 /tune/tune.exfat
 /dosattr/lsdosattr
 /dosattr/chdosattr
+
+/resize/resize.exfat
+/resize/.libs/
+*.lo
+*.la
+__pycache__/
+/resize/evidence/
