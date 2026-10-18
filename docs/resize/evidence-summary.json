@@ -7,10 +7,15 @@
   "additional_groups": {
     "driver": {
       "committed_report": "docs/resize/evidence/driver.json",
-      "raw_report": "resize/evidence/driver/results.json",
-      "raw_report_sha256": "cd7240b2c386d525c26fe202bb464c40bf7cc62d61de5af69db87cc1fcd7ed1c",
-      "records": 0,
-      "status": "NOT_RUN"
+      "completed_linux_workload_iterations": 50000,
+      "grow_operations": 10,
+      "head": "ca49e427cf0a8a5115c1a57aaf2a906041310aa6",
+      "previous_not_run_report": "docs/resize/evidence/driver-not-run.json",
+      "raw_report": "resize/evidence/vm-driver/results.json",
+      "raw_report_sha256": "6981a6587ff51b8e3ba45213b37bf2cd74148c4d6a7925744f71fdd09f202a93",
+      "records": 10,
+      "shrink_operations": 10,
+      "status": "PASS"
     },
     "final-compound": {
       "committed_report": "docs/resize/evidence/final-compound.json",
@@ -114,7 +119,8 @@
   },
   "committed_evidence_sha256": {
     "docs/resize/evidence/clean-build-install.json": "dca57c57b08b8b47192f08ee7c7da4cf9c635f66249cc9657d293d13b67ea412",
-    "docs/resize/evidence/driver.json": "8a92c74e80eb4a93f1a5622d0cdcde0174f97e73754df943ccdd0e29ce61c584",
+    "docs/resize/evidence/driver-not-run.json": "8a92c74e80eb4a93f1a5622d0cdcde0174f97e73754df943ccdd0e29ce61c584",
+    "docs/resize/evidence/driver.json": "fd679a46b2a20a4b84d285e879e15737d65e2c0e0a5d59255403d5e106e3fdc1",
     "docs/resize/evidence/final-compound.json": "2ba70d6af65dd23518366e8a0bf44e81b1fd184c128d8f50f9b58ba54c26bcbd",
     "docs/resize/evidence/final-containers.json": "7d02651422fbf28512b54a099cdfc8e5b252842bce00bf3d150d01ae17c5d74a",
     "docs/resize/evidence/final-counterexamples.json": "6ae486150669fda4dccec1636f84aa919314ecb56828845ba0d94e3704815672",
@@ -127,7 +133,10 @@
     "docs/resize/evidence/final-upstream.json": "21d538d381e222d25616dc660cf4de327cb29916f5641c7ff4088b09f93d2311",
     "docs/resize/evidence/leak-detector.json": "1c5c77726046f6c3318350cc5452e1b17c755acb89b8e28fe557fcc71241b293",
     "docs/resize/evidence/model-and-fault-cases.jsonl": "1950db1cfa57b347b9225aa07b6f9af14aef4bf4a4906a3495b53baca1dcc378",
-    "docs/resize/evidence/model-and-fault-run.json": "ddb813271a5cae71498697b3f2ccd5f0bc6cab49c2c8881e5763bfdbc544e193"
+    "docs/resize/evidence/model-and-fault-run.json": "ddb813271a5cae71498697b3f2ccd5f0bc6cab49c2c8881e5763bfdbc544e193",
+    "docs/resize/evidence/vm-native.json": "288c32584a1714da0a3ca9ed35100861683c57e754820b8392f616f7ac8709e9",
+    "docs/resize/evidence/vm-upstream.json": "01f6aa1acbf92f4f0d4297012e904cae1c8404fd0e4bccfabe4e8dd283f783ca",
+    "docs/resize/evidence/vm-verification.json": "b1d8417edbb9a0945133085801d8591dd0d1cf5cae8c6b7867987a96b66fd37f"
   },
   "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
   "distribution": {
@@ -139,9 +148,10 @@
     "raw_evidence_excluded": true,
     "status": "PASS"
   },
+  "driver_qualification_recorded_utc": "2026-10-18T10:40:34.967973+00:00",
   "implementation_commit": "21b1ee59cfa56eb752857c283ff5fd59f55c8b4e",
   "limits": [
-    "Linux driver: NOT_RUN; CAP_SYS_ADMIN and loop device nodes are unavailable. Required 10 seeds x 5000 real workload iterations remain open.",
+    "Linux driver: the specified 10 seeds x 5000 real workload iterations passed in one VM. This covers 512-byte sectors, 4096-byte clusters, and 32-96 MiB filesystems. It does not qualify other kernels, hardware, or physical power loss.",
     "No physical power-loss or device-cache persistence model was supplied or qualified.",
     "Direct devices, partition changes, TexFAT, and vendor allocation semantics are disabled.",
     "Broad vendor/GUID/bad-cluster combinations, very large real images, and full storage/close-failure campaigns remain incomplete.",
@@ -299,5 +309,10 @@
     "resize/vendor/tests/library/unit/geometry_tests.c": "bd5d2ddd47ce356f78787f608895a1cb3c4599bad7425c2f99812656a5b0877c"
   },
   "status": "PARTIAL_QUALIFICATION",
-  "test_commit": "d0930b752eee004e1ad47df1744148579bc23712"
+  "test_commit": "d0930b752eee004e1ad47df1744148579bc23712",
+  "vm_verification": {
+    "head": "ca49e427cf0a8a5115c1a57aaf2a906041310aa6",
+    "report": "docs/resize/evidence/vm-verification.json",
+    "status": "PASS"
+  }
 }

@@ -1,0 +1,68 @@
+{
+  "artifact_integrity": {
+    "action_logs": 10,
+    "checks": [
+      "All committed evidence hashes match the summary",
+      "All recorded implementation, test-source, binary, configuration, raw-report, and raw-log hashes match",
+      "Each action log has iterations 0-4999 and all six operation types",
+      "No successful test images, active journals, or loop attachments remain",
+      "Release status remains PARTIAL_QUALIFICATION and EXPERIMENTAL_IMAGE_ONLY"
+    ],
+    "resize_records": 20,
+    "sequential_iterations_per_log": 5000,
+    "source_files": 175,
+    "status": "PASS"
+  },
+  "build": {
+    "commands": [
+      "./autogen.sh",
+      "./configure --enable-tests --enable-experimental-resize",
+      "make -j2"
+    ],
+    "logs": {
+      "resize/evidence/vm-environment/autogen.log": "b9d72ff3e64889d188ddb6182fadf62d3a622516edbc942a18613c5e53c4a3a9",
+      "resize/evidence/vm-environment/build.log": "cc7e573e54808510caca67d0f7422a9b1663af49934945e45d8013741be34b4c",
+      "resize/evidence/vm-environment/configure.log": "6007e3557749163fd7baa69985bbe7b6816f7ecb470592599cad67a1d92e9b0c"
+    },
+    "status": "PASS"
+  },
+  "checks": [
+    {
+      "command": "make -C lib check",
+      "raw_log": "resize/evidence/vm-environment/lib-check.log",
+      "raw_log_sha256": "e27f1c077111b2327092ffc3087f986a0732d400b2f711d833f43f2fa9c54cc9",
+      "status": "PASS",
+      "suites": 2
+    },
+    {
+      "c_suites": 10,
+      "command": "make check",
+      "committed_report": "docs/resize/evidence/vm-native.json",
+      "library_suites": 2,
+      "python_unit_tests": 11,
+      "raw_log": "resize/evidence/vm-environment/make-check.log",
+      "raw_log_sha256": "2e6bb4c5e6f914e2347284fa758104f3a38eee07bc011c1bb11314c4d5f0586e",
+      "raw_report": "resize/evidence/20261018-113918/results.json",
+      "raw_report_sha256": "288c32584a1714da0a3ca9ed35100861683c57e754820b8392f616f7ac8709e9",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 resize/tests/regressions.py --output resize/evidence/vm-upstream",
+      "committed_report": "docs/resize/evidence/vm-upstream.json",
+      "fsck_cases": 24,
+      "raw_log": "resize/evidence/vm-environment/upstream.log",
+      "raw_log_sha256": "d0adbda1bfef7f0dec6e5aa48de13e6039039faf9cb8583fc0f4585a4a7471fe",
+      "raw_report": "resize/evidence/vm-upstream/results.json",
+      "raw_report_sha256": "01f6aa1acbf92f4f0d4297012e904cae1c8404fd0e4bccfabe4e8dd283f783ca",
+      "status": "PASS"
+    }
+  ],
+  "head": "ca49e427cf0a8a5115c1a57aaf2a906041310aa6",
+  "notes": [
+    "These checks repeat existing suites with the VM toolchain. Do not add them to the historical unique-suite counts.",
+    "No executable source changes were required.",
+    "An initial dependency fetch failed because sudo did not retain the existing proxy settings. Dependency installation then passed with those settings. Both logs remain in the raw evidence directory."
+  ],
+  "schema": 1,
+  "status": "PASS"
+}
