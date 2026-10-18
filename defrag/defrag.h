@@ -52,6 +52,8 @@ struct exfat_defrag {
 					       */
 	struct buffer_desc *dentry_buffer;    /* Temporary storage for directory entries */
 	uint8_t *tmp_clus;                    /* Temporary buffer for cluster swapping */
+	uint32_t bitmap_node;
+	uint32_t upcase_node;
 };
 
 /* Reference for fragmentation assessment */

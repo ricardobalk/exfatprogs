@@ -4,7 +4,7 @@
  * exFAT Defragmentation Tool - defrag.exfat
  * Usage: defrag.exfat [-a] /dev/sdX
  * Effect: defragment or assess the entire exFAT-formated device
- * Feature: support safe interruption via Ctrl+C
+ * Experimental: in-place writes are NOT safe against I/O errors or crashes.
  * Copyright (C) 2025 Haodong Xia <3394797836@qq.com>
  */
 
@@ -30,14 +30,10 @@
 /* Global interrupt flag */
 static volatile sig_atomic_t interrupt_received;
 
-/* Index at which interruption occurred */
-static uint32_t interrupt_point;
-
 /* Signal handler for SIGINT/SIGTERM */
 static void sigint_handler(int sig)
 {
-	(void)sig;			/* Suppress unused parameter warning */
-	interrupt_received = 1;		/* Mark that an interrupt has occurred */
+	interrupt_received = sig;
 }
 
 /*------------ Part 1: FAT, Bitmap, and Boot Checksum I/O -------------*/
@@ -50,7 +46,7 @@ static int exfat_rw_FAT(struct exfat *exfat, uint32_t *list, uint32_t list_len, 
 {
 	off_t offset;
 	bool ret;
-	const size_t len = (size_t)(list_len * sizeof(uint32_t));
+	const size_t len = (size_t)list_len * sizeof(uint32_t);
 	uint32_t i;
 
 	offset = (off_t)le32_to_cpu(exfat->bs->bsx.fat_offset) << exfat->bs->bsx.sect_size_bits;
@@ -66,6 +62,9 @@ static int exfat_rw_FAT(struct exfat *exfat, uint32_t *list, uint32_t list_len, 
 		for (i = 0; i < list_len; i++)
 			list[i] = cpu_to_le32(list[i]);
 		ret = exfat_write_full(exfat->blk_dev->dev_fd, list, len, offset);
+		/* Callers still need host-endian links during directory writeback. */
+		for (i = 0; i < list_len; i++)
+			list[i] = le32_to_cpu(list[i]);
 		if (!ret)
 			return -EIO;
 	}
@@ -136,12 +135,18 @@ static int exfat_rw_bitmap(struct exfat *exfat, bool read)
  * From libexfat.c
  * Updates the boot sector checksum.
  */
-static int exfat_update_boot_checksum(struct exfat_blk_dev *bd, bool is_backup)
+static int exfat_update_boot_checksum(struct exfat *exfat, bool is_backup)
 {
+	/* A regular image is opened with the default device sector size, which
+	 * can differ from the filesystem's logical sector size.
+	 */
+	struct exfat_blk_dev logical_bd = *exfat->blk_dev;
+	struct exfat_blk_dev *bd = &logical_bd;
 	unsigned int checksum = 0;
 	int ret, sec_idx, backup_sec_idx = 0;
 	unsigned char *buf;
 
+	bd->sector_size = exfat->sect_size;
 	buf = malloc(bd->sector_size);
 	if (!buf) {
 		exfat_err("Cannot allocate pbr: out of memory\n");
@@ -167,7 +172,7 @@ static int exfat_update_boot_checksum(struct exfat_blk_dev *bd, bool is_backup)
 		boot_calc_checksum(buf, bd->sector_size, is_boot_sec, &checksum);
 	}
 
-	ret = exfat_write_checksum_sector(bd, NULL, checksum, is_backup);
+	ret = exfat_write_checksum_sector(bd, NULL, 0, checksum, is_backup);
 
 free_buf:
 	free(buf);
@@ -190,7 +195,7 @@ static int add_virtual_node(struct cluster_info_set *set, uint32_t data)
 
 	/* Allocate memory in chunks due to unknown total file count */
 	if (index % VIRT_SPACE_ALIGN == 0) {
-		new_size = (offset + index + VIRT_SPACE_ALIGN) * sizeof(uint32_t);
+		new_size = ((size_t)offset + index + VIRT_SPACE_ALIGN) * sizeof(uint32_t);
 		new_next_clus = realloc(set->next_clus, new_size);
 		if (new_next_clus == NULL) {
 			exfat_err("memory run out in %s", __func__);
@@ -215,7 +220,8 @@ static int set_physical_nodes(struct cluster_info_set *set,
 	uint32_t i;
 
 	/* avoid the risk of out of memory */
-	if (begin < EXFAT_FIRST_CLUSTER || begin + count >= set->num_phys_clus) {
+	if (begin < EXFAT_FIRST_CLUSTER || begin >= set->num_phys_clus ||
+	    count >= set->num_phys_clus - begin) {
 		exfat_err("%s: invalid parameter \"begin = %u, count = %u\"\n", __func__,
 				begin, count);
 		return -1;
@@ -329,6 +335,11 @@ static int BFS_read_children(struct exfat_defrag *defrag, struct exfat_inode *in
 
 				/* Allocate and update inode if it's a directory */
 				if (attr & ATTR_SUBDIR) {
+					if (exfat_bitmap_get(defrag->exfat->disk_bitmap, first_clu)) {
+						exfat_err("cyclic or cross-linked directory\n");
+						goto fail;
+					}
+					exfat_bitmap_set(defrag->exfat->disk_bitmap, first_clu);
 					child_inode = exfat_alloc_inode(attr);
 					if (child_inode == NULL)
 						goto fail;
@@ -384,7 +395,7 @@ static int BFS_read_children(struct exfat_defrag *defrag, struct exfat_inode *in
 				}
 			}
 
-			if (first_dentry->file_checksum != checksum) {
+			if (le16_to_cpu(first_dentry->file_checksum) != checksum) {
 				exfat_err("%s: invalid checksum, please run fsck.exfat to check and repair\n",
 					  __func__);
 				goto fail;
@@ -393,11 +404,12 @@ static int BFS_read_children(struct exfat_defrag *defrag, struct exfat_inode *in
 
 		case EXFAT_BITMAP:
 			first_clu = le32_to_cpu(first_dentry->bitmap_start_clu);
+			defrag->bitmap_node = set->num_phys_clus + set->num_clus_chain;
 			ret = add_virtual_node(set, first_clu);
 			if (ret != 0)
 				goto fail;
 
-			size = le32_to_cpu(first_dentry->bitmap_size);
+			size = le64_to_cpu(first_dentry->bitmap_size);
 			FAT_entry_count = (uint32_t)((size - 1) / defrag->exfat->clus_size);
 			if (set_physical_nodes(set, first_clu, FAT_entry_count, first_clu + 1) < 0)
 				goto fail;
@@ -405,11 +417,12 @@ static int BFS_read_children(struct exfat_defrag *defrag, struct exfat_inode *in
 
 		case EXFAT_UPCASE:
 			first_clu = le32_to_cpu(first_dentry->upcase_start_clu);
+			defrag->upcase_node = set->num_phys_clus + set->num_clus_chain;
 			ret = add_virtual_node(set, first_clu);
 			if (ret != 0)
 				goto fail;
 
-			size = le32_to_cpu(first_dentry->upcase_size);
+			size = le64_to_cpu(first_dentry->upcase_size);
 			FAT_entry_count = (uint32_t)((size - 1) / defrag->exfat->clus_size);
 			if (set_physical_nodes(set, first_clu, FAT_entry_count, first_clu + 1) < 0)
 				goto fail;
@@ -444,6 +457,7 @@ static int BFS_read_file_tree(struct exfat_defrag *defrag)
 	uint32_t i, n_clus, n_chain, tmp_clu;
 
 	list_add(&exfat->root->list, &exfat->dir_list);
+	exfat_bitmap_set(exfat->disk_bitmap, exfat->root->first_clus);
 	if (add_virtual_node(set, exfat->root->first_clus) < 0)
 		goto err;
 
@@ -480,9 +494,22 @@ static int BFS_read_file_tree(struct exfat_defrag *defrag)
 				exfat_err("%s: cluster %u should be alloced\n", __func__, tmp_clu);
 				goto err;
 			}
+			if (exfat_bitmap_get(exfat->ohead_bitmap, tmp_clu)) {
+				exfat_err("%s: cyclic or cross-linked cluster chain\n", __func__);
+				goto err;
+			}
+			exfat_bitmap_set(exfat->ohead_bitmap, tmp_clu);
 			tmp_clu = set->next_clus[tmp_clu];
 			if (tmp_clu == EXFAT_EOF_CLUSTER)
 				break;
+		}
+	}
+	/* Every allocated cluster must have an owner before swapping begins. */
+	for (i = EXFAT_FIRST_CLUSTER; i < n_clus; i++) {
+		if (exfat_bitmap_get(exfat->alloc_bitmap, i) !=
+		    exfat_bitmap_get(exfat->ohead_bitmap, i)) {
+			exfat_err("%s: unreferenced allocated cluster %u\n", __func__, i);
+			goto err;
 		}
 	}
 
@@ -491,6 +518,19 @@ static int BFS_read_file_tree(struct exfat_defrag *defrag)
 err:
 	exfat_free_dir_list(exfat);
 	return -1;
+}
+
+/* Swapping can also fragment chains that have not yet been processed. */
+static bool chain_is_contiguous(const struct cluster_info_set *set, uint32_t head)
+{
+	uint32_t clu = set->next_clus[head];
+
+	while (set->next_clus[clu] != EXFAT_EOF_CLUSTER) {
+		if (set->next_clus[clu] != clu + 1)
+			return false;
+		clu++;
+	}
+	return true;
 }
 
 /*
@@ -518,7 +558,6 @@ static int BFS_write_children(struct exfat_defrag *defrag,
 	}
 
 	while (1) {
-		first_clu = set->next_clus[(*index)];
 		checksum = 0;
 		dentry_count = 1;
 
@@ -546,10 +585,11 @@ static int BFS_write_children(struct exfat_defrag *defrag,
 
 			/* Do not process empty files/directories */
 			if (le64_to_cpu(dentry->stream_size) != 0) {
+				first_clu = set->next_clus[*index];
 
 				/* Set start_clu + contiguous_flag */
 				dentry->stream_start_clu = cpu_to_le32(first_clu);
-				if ((*index) <= interrupt_point)
+				if (chain_is_contiguous(set, *index))
 					dentry->stream_flags |= EXFAT_SF_CONTIGUOUS;
 				else
 					dentry->stream_flags &= ~EXFAT_SF_CONTIGUOUS;
@@ -563,7 +603,8 @@ static int BFS_write_children(struct exfat_defrag *defrag,
 					child_inode->parent = inode;
 					child_inode->dentry_count = dentry_count;
 					child_inode->first_clus = first_clu;
-					child_inode->is_contiguous = true;
+					child_inode->is_contiguous =
+						!!(dentry->stream_flags & EXFAT_SF_CONTIGUOUS);
 					child_inode->size = le64_to_cpu(dentry->stream_size);
 					list_add_tail(&child_inode->list, &defrag->exfat->dir_list);
 				}
@@ -579,30 +620,32 @@ static int BFS_write_children(struct exfat_defrag *defrag,
 						  __func__);
 					goto fail;
 				}
-				exfat_calc_dentry_checksum(dentry, &checksum, false);
-
-				if (dentry->type == EXFAT_VENDOR_ALLOC) {
+				if (dentry->type == EXFAT_VENDOR_ALLOC &&
+				    le64_to_cpu(dentry->vendor_alloc_size) != 0) {
 					/* Set start_clu + contiguous_flag */
 					dentry->vendor_alloc_start_clu =
 						cpu_to_le32(set->next_clus[(*index)]);
-					if ((*index) <= interrupt_point)
+					if (chain_is_contiguous(set, *index))
 						dentry->vendor_alloc_flags |= EXFAT_SF_CONTIGUOUS;
 					else
 						dentry->vendor_alloc_flags &= ~EXFAT_SF_CONTIGUOUS;
 					(*index)++;
 				}
-
+				/* Include the final, updated vendor allocation in the checksum. */
+				exfat_calc_dentry_checksum(dentry, &checksum, false);
 			}
 
 			first_dentry->file_checksum = cpu_to_le16(checksum);
 			break;
 
 		case EXFAT_BITMAP:
+			first_clu = set->next_clus[*index];
 			first_dentry->bitmap_start_clu = cpu_to_le32(first_clu);
 			(*index)++;
 			break;
 
 		case EXFAT_UPCASE:
+			first_clu = set->next_clus[*index];
 			first_dentry->upcase_start_clu = cpu_to_le32(first_clu);
 			(*index)++;
 			break;
@@ -618,8 +661,7 @@ static int BFS_write_children(struct exfat_defrag *defrag,
 	}
 
 success:
-	exfat_de_iter_flush(&de_iter);
-	return 0;
+	return exfat_de_iter_flush(&de_iter);
 fail:
 	exfat_de_iter_flush(&de_iter);
 	return -1;
@@ -637,23 +679,27 @@ static int BFS_write_file_tree(struct exfat_defrag *defrag)
 
 	/* Update root cluster in memory and on disk */
 	exfat->root->first_clus = set->next_clus[index++];
-	exfat->root->is_contiguous = true;
+	exfat->root->is_contiguous = false;
 	list_add(&exfat->root->list, &exfat->dir_list);
 
-	exfat->bs->bsx.root_cluster = exfat->root->first_clus;
-	if (exfat_write_sector(exfat->blk_dev, exfat->bs, BOOT_SEC_IDX) < 0) {
+	exfat->bs->bsx.root_cluster = cpu_to_le32(exfat->root->first_clus);
+	/* Update only the header, preserving the rest of a larger boot sector. */
+	if (!exfat_write_full(exfat->blk_dev->dev_fd, &exfat->bs->bsx.root_cluster,
+			      sizeof(exfat->bs->bsx.root_cluster), 96)) {
 		exfat_err("%s: fail in update boot sector\n", __func__);
 		goto err;
 	}
-	if (exfat_write_sector(exfat->blk_dev, exfat->bs, BACKUP_BOOT_SEC_IDX) < 0) {
+	if (!exfat_write_full(exfat->blk_dev->dev_fd, &exfat->bs->bsx.root_cluster,
+			      sizeof(exfat->bs->bsx.root_cluster),
+			      (off_t)BACKUP_BOOT_SEC_IDX * exfat->sect_size + 96)) {
 		exfat_err("%s: fail in update backup boot sector\n", __func__);
 		goto err;
 	}
-	if (exfat_update_boot_checksum(exfat->blk_dev, false) < 0) {
+	if (exfat_update_boot_checksum(exfat, false) < 0) {
 		exfat_err("%s: fail in update boot sector checksum\n", __func__);
 		goto err;
 	}
-	if (exfat_update_boot_checksum(exfat->blk_dev, true) < 0) {
+	if (exfat_update_boot_checksum(exfat, true) < 0) {
 		exfat_err("%s: fail in update backup boot sector checksum\n", __func__);
 		goto err;
 	}
@@ -776,7 +822,7 @@ static void clus_exchange(struct cluster_info_set *set, uint32_t clu_0,
  */
 static int exfat_swap_clus(struct exfat_defrag *defrag, uint32_t clu_1, uint32_t clu_2)
 {
-	char *bitmap = defrag->exfat->alloc_bitmap;
+	unsigned char *bitmap = defrag->exfat->alloc_bitmap;
 	bool clu_1_not_free = exfat_bitmap_get(bitmap, clu_1);
 
 	struct cluster_info_set *set = &(defrag->clu_info_set);
@@ -829,15 +875,36 @@ static int exfat_defrag(struct exfat_defrag *defrag)
 	uint32_t n_file = set->num_clus_chain;
 	/* scan_ptr moves forward linearly; exchanged_ptr follows cluster chains */
 	uint32_t scan_ptr = EXFAT_RESERVED_CLUSTERS, exchanged_ptr = 0;
-	uint32_t i;
+	uint32_t i, task, count = 0;
+	uint32_t *order;
+
+	/* Bitmap/upcase consumers require contiguous system allocations. Finish
+	 * these small chains first, even if a signal arrives, then stop between
+	 * individual swaps of ordinary allocations. Virtual-node order itself
+	 * must stay unchanged for directory entry writeback.
+	 */
+	if (!defrag->bitmap_node || !defrag->upcase_node)
+		return -EINVAL;
+	order = calloc(n_file, sizeof(*order));
+	if (!order)
+		return -ENOMEM;
+	order[count++] = defrag->bitmap_node;
+	order[count++] = defrag->upcase_node;
+	for (i = n_clus; i < n_clus + n_file; i++) {
+		if (i != defrag->bitmap_node && i != defrag->upcase_node)
+			order[count++] = i;
+	}
 
 	exfat_info("Defragmentation is in progress -- please keep the device connected.\n");
 	exfat_info("WARNING: Removing or powering off the device during execution may corrupt the file system.\n");
-	exfat_info("If you do not want to wait, just press Ctrl+C to terminate it safely.\n");
+	exfat_info("Ctrl+C requests a stop followed by metadata writeback; wait for exit.\n");
 
-	for (i = n_clus; i < n_clus + n_file; i++) {
+	for (task = 0; task < n_file; task++) {
+		i = order[task];
 		exchanged_ptr = set->next_clus[i];
 		while (1) {
+			if (interrupt_received && task >= 2)
+				goto interrupted;
 			if (exchanged_ptr == EXFAT_EOF_CLUSTER)
 				break;
 
@@ -850,18 +917,18 @@ static int exfat_defrag(struct exfat_defrag *defrag)
 			scan_ptr++;
 		}
 		exfat_info("\r\033[Kdefrag.exfat has processed %u / %u tasks",
-			   i - n_clus + 1, n_file);
+			   task + 1, n_file);
 		fflush(stdout);
 
-		if (interrupt_received) {
-			interrupt_point = i;
-			exfat_info("\nReceived termination signal! Writing back metadata...\n");
-			goto out;
-		}
 	}
 	exfat_info("\nWriting back metadata...\n");
+	goto out;
+
+interrupted:
+	exfat_info("\nReceived termination signal! Writing back metadata...\n");
 
 out:
+	free(order);
 	return ret;
 }
 
@@ -1102,13 +1169,22 @@ int main(int argc, char *argv[])
 	next_to_prev(set);
 
 	/* Step 7: Perform defragmentation with interrupt support */
-	interrupt_point = 0;
 	interrupt_received = 0;
 	signal(SIGINT, sigint_handler);
 	signal(SIGTERM, sigint_handler);
 
 	if (exfat_defrag(&defrag) < 0) {
 		exfat_err("fail in exfat_defrag\n");
+		ret = 1;
+		goto fsync_and_free;
+	}
+
+	/* Directory traversal must follow the NEW chains, including unfinished
+	 * fragmented directories after a signal. Write the FAT before traversing.
+	 * This does not make in-place operation crash-safe.
+	 */
+	if (exfat_rw_FAT(defrag.exfat, set->next_clus, set->num_phys_clus, false) < 0) {
+		exfat_err("fail in exfat_write_FAT\n");
 		ret = 1;
 		goto fsync_and_free;
 	}
@@ -1126,15 +1202,14 @@ int main(int argc, char *argv[])
 		ret = 1;
 		goto fsync_and_free;
 	}
-	if (exfat_rw_FAT(defrag.exfat, set->next_clus, set->num_phys_clus, false) < 0) {
-		exfat_err("fail in exfat_write_FAT\n");
-		ret = 1;
-		goto fsync_and_free;
-	}
-
 fsync_and_free:
-	/* Step 10: fsync and free allocated resources */
-	exfat_fsync(bd.dev_fd);
+	/* A failed durability boundary cannot be reported as completion. */
+	if (!only_assessment && exfat_fsync(bd.dev_fd) < 0) {
+		exfat_err("failed to sync device: %s\n", strerror(errno));
+		ret = 1;
+	}
+	if (!ret && interrupt_received)
+		ret = 128 + interrupt_received;
 
 	if (set->next_clus)
 		free(set->next_clus);

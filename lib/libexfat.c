@@ -677,6 +677,8 @@ int exfat_read2(int fd, void *buf, off_t *size, off_t *offset)
 			ret = 1;
 			goto out;
 		}
+		if (size_read < 0 && errno == EINTR)
+			continue;
 		if (size_read < 0) {
 #if !EXFAT_NO_IOSTATS
 			io_stat.err |= EXFAT_IOSTAT_READ;
@@ -751,6 +753,8 @@ int exfat_write2(int fd, const void *buf, off_t *size, off_t *offset)
 			ret = -EIO;
 			goto out;
 		}
+		if (size_written < 0 && errno == EINTR)
+			continue;
 		if (size_written < 0) {
 #if !EXFAT_NO_IOSTATS
 			io_stat.err |= EXFAT_IOSTAT_WRITE;
@@ -859,7 +863,9 @@ int exfat_fsync(int fd)
 
 	exfat_getts(&ts_a);
 #endif
-	ret = fsync(fd);
+	do {
+		ret = fsync(fd);
+	} while (ret < 0 && errno == EINTR);
 #if !EXFAT_NO_IOSTATS
 	exfat_getts(&ts_b);
 
