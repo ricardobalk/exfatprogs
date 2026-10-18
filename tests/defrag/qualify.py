@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from manifest import write_manifest
 from run import ROOT
 
 
@@ -65,6 +66,7 @@ def main():
     finally:
         report['seconds']=round(time.monotonic()-started,3)
         (a.out/'results.json').write_text(json.dumps(report,indent=2)+'\n')
+        write_manifest(a.out)
     print(json.dumps(report),flush=True)
     return 0
 

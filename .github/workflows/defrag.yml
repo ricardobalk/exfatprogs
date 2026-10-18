@@ -60,9 +60,9 @@ jobs:
         run: |
           python3 tests/defrag/qualify.py \
             --out "defrag-ci-smoke-${{ matrix.compiler }}"
-      - name: Upload qualification evidence
+      - name: Upload qualification test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: defrag-smoke-${{ matrix.compiler }}
           path: defrag-ci-smoke-${{ matrix.compiler }}/
@@ -85,29 +85,36 @@ jobs:
           sudo apt-get install -y build-essential libblkid-dev xz-utils xxd
       - name: Build instrumented binaries
         run: |
-          python3 tests/defrag/build.py --sanitize --out build-defrag-ci-sanitize
+          mkdir defrag-ci-sanitize
+          python3 tests/defrag/build.py --sanitize \
+            --out defrag-ci-sanitize/build
           echo "DEFRAG_ASAN_RUNTIME=$(cc -print-file-name=libasan.so)" >> "$GITHUB_ENV"
       - name: Run instrumented regression and image tests
         run: |
-          mkdir defrag-ci-sanitize
           python3 tests/defrag/regressions.py \
-            --binary build-defrag-ci-sanitize/defrag.exfat \
-            --mkfs build-defrag-ci-sanitize/mkfs.exfat \
-            --fault build-defrag-ci-sanitize/fault.so \
+            --binary defrag-ci-sanitize/build/defrag.exfat \
+            --mkfs defrag-ci-sanitize/build/mkfs.exfat \
+            --fault defrag-ci-sanitize/build/fault.so \
             --out defrag-ci-sanitize/regressions
           python3 tests/defrag/negative.py \
-            --build build-defrag-ci-sanitize \
+            --build defrag-ci-sanitize/build \
             --out defrag-ci-sanitize/negative
           python3 tests/defrag/transaction_regressions.py \
-            --build build-defrag-ci-sanitize \
+            --build defrag-ci-sanitize/build \
             --out defrag-ci-sanitize/transactions
           python3 tests/defrag/run.py \
-            --build build-defrag-ci-sanitize \
+            --build defrag-ci-sanitize/build \
             --cases 16 --operations 1000 \
             --out defrag-ci-sanitize/model
-      - name: Upload sanitizer evidence
+      - name: Index sanitizer test output
         if: always()
-        uses: actions/upload-artifact@v4
+        run: |
+          if test -d defrag-ci-sanitize; then
+            python3 tests/defrag/manifest.py defrag-ci-sanitize
+          fi
+      - name: Upload sanitizer test output
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
           name: defrag-sanitizers
           path: defrag-ci-sanitize/
@@ -130,9 +137,9 @@ jobs:
         run: |
           python3 tests/defrag/qualify.py --full --jobs 2 \
             --out defrag-ci-full
-      - name: Upload full qualification evidence
+      - name: Upload full qualification test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: defrag-full-rootless
           path: defrag-ci-full/
@@ -150,21 +157,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libblkid-dev xz-utils xxd
       - name: Build test binaries
-        run: python3 tests/defrag/build.py --out build-defrag-ci-driver
+        run: |
+          mkdir defrag-ci-driver
+          python3 tests/defrag/build.py --out defrag-ci-driver/build
       - name: Load the Linux exFAT driver
         run: sudo modprobe exfat
       - name: Run ten disposable loop-image workloads
         run: |
           sudo python3 tests/defrag/mounted.py \
-            --build build-defrag-ci-driver \
+            --build defrag-ci-driver/build \
             --seeds 10 --operations 5000 \
-            --out defrag-ci-driver
-      - name: Make evidence readable by the artifact service
+            --out defrag-ci-driver/results
+      - name: Make test output readable by the artifact service
         if: always()
         run: sudo chown -R "$(id -u):$(id -g)" defrag-ci-driver || true
-      - name: Upload driver evidence
+      - name: Index driver test output
         if: always()
-        uses: actions/upload-artifact@v4
+        run: |
+          if test -d defrag-ci-driver; then
+            python3 tests/defrag/manifest.py defrag-ci-driver
+          fi
+      - name: Upload driver test output
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
           name: defrag-linux-driver
           path: defrag-ci-driver/

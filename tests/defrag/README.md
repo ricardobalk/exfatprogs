@@ -29,10 +29,13 @@ The `Experimental defrag qualification` GitHub Actions workflow runs smoke
 tests with GCC and Clang for relevant pushes and pull requests. It also runs
 focused sanitizer tests. A scheduled or manual job runs the full rootless
 program. A separate manual job runs the privileged Linux-driver tests. Each job
-uploads its evidence directory.
+uploads its complete test output as a GitHub Actions artifact.
 
 Results use JSON or JSONL, including failures. A failed case keeps image files,
 journals, operation logs, and expected manifests. A successful large case
 removes its temporary image. Source and binary hashes and reached fault
-positions make the counts reviewable. Files in `context/` are historical input.
-They are not current evidence.
+positions make the counts reviewable. `qualify.py` writes `manifest.json` with
+a SHA-256 digest for every other regular file below the output directory. The
+focused CI jobs add the same manifest before upload. Test output is ignored by Git and
+must not be copied into the source tree. Files in `context/` are historical
+input. They are not current evidence.

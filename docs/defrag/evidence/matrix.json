@@ -1,8 +1,0 @@
-{
-  "status": "PASS",
-  "cases": 288,
-  "requested_cases": 288,
-  "model_iterations": 8928,
-  "linux_filesystem_syscalls": 0,
-  "seconds": 76.173
-}

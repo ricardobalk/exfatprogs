@@ -8,10 +8,10 @@ in the specified scope. Use it only with small, disposable, offline image
 files. Do not use it directly on user volumes.** The normal autotools build
 does not build or install the defragmenter.
 
-This work has its own evidence. Results in `context/` are historical input.
-They are not results from this work. See [qualification.md](qualification.md)
-for the measured results and limits. See [evidence/](evidence/README.md) for
-machine-readable evidence.
+Qualification evidence is test output and is not stored in the source tree.
+Results in `context/` are historical input, not results from this work. See
+[qualification.md](qualification.md) for the test program, artifact layout,
+and limits.
 
 This document puts decisions and limits before implementation details. It uses
 short sentences and consistent terms in the style of ASD-STE100. It has not
@@ -241,9 +241,10 @@ sudo python3 tests/defrag/mounted.py --seeds 10 --operations 5000 \
 Use a new output directory for each command. Use `--build` to select a different
 explicit build directory. Reports record seeds, geometry, iterations, effective
 model changes, real workload system calls, fragmentation, fsck status, and fault
-positions. Model iterations are not Linux file-system operations. The driver
-count includes explicit `os.*` workload calls. It does not include runtime,
-inspection, or remount calls.
+positions. The complete qualifier also writes `manifest.json` with a SHA-256
+digest for each other regular output file. Model iterations are not Linux
+file-system operations. The driver count includes explicit `os.*` workload
+calls. It does not include runtime, inspection, or remount calls.
 
 A failed test keeps private image files, journals, operation logs, expected
 manifests, and logs. A successful rootless seed removes large temporary files
@@ -253,8 +254,8 @@ the explicitly started C test worker.
 
 `minimize.py --seed N --operations M --match 'exact error text' --out ...`
 tries shorter workload prefixes with the same seed and required diagnostic. It
-is a heuristic tool. The final evidence does not claim a global minimum or an
-executed reduction.
+is a heuristic tool. The qualification program does not claim a global minimum
+or an executed reduction.
 
 ## Evidence limits
 
