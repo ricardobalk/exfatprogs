@@ -25,6 +25,7 @@ EXTRA_DIST = resize.exfat.in \
  tests/reader.py \
  tests/regressions.py \
  tests/run.py \
+ tests/signals.py \
  tests/test_host.py \
  vendor/LICENSE \
  vendor/ORIGIN \

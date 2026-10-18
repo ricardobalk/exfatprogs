@@ -44,6 +44,8 @@ jobs:
         run: python3 resize/tests/container.py --output resize/evidence/containers
       - name: Check inactive FAT entries and reader counterexamples
         run: python3 resize/tests/nofat.py --output resize/evidence/inactive-fat
+      - name: Deliver actual Unix cancellation signals
+        run: python3 resize/tests/signals.py --output resize/evidence/signals
       - name: Sample faults on larger real images
         run: python3 resize/tests/large_faults.py --output resize/evidence/large-faults
       - name: Reproduce checker defects on the exact baseline
