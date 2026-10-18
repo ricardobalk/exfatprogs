@@ -1,9 +1,8 @@
 # Offline image resize
 
 **This is an experimental image-only implementation. Grow, shrink, and undo
-recovery are implemented. The specified Linux-driver suite passed in a VM.
-Physical power-loss qualification is incomplete. Direct devices are disabled.
-Do not use this version on user data.**
+recovery are implemented. Physical power-loss qualification is incomplete.
+Direct devices are disabled. Do not use this version on user data.**
 
 ## Purpose and scope
 
@@ -122,7 +121,7 @@ of the backing file even when the relocation plan is small.
 | Direct block or character device | Rejected |
 | exFAT revision 1.00, one FAT | Supported |
 | Other revision, two FATs, TexFAT | Rejected before image writes |
-| Sector sizes 512 through 4096; unchanged cluster size | Engine support; tested image geometries are in the evidence |
+| Sector sizes 512 through 4096; unchanged cluster size | Engine support; test reports record exercised geometries |
 | Empty files, partial final clusters, ValidDataLength | Supported; logical bytes after ValidDataLength are zero |
 | FAT chains and NoFatChain streams | Supported; shrink can create a FAT chain |
 | Root and multi-cluster directories | Supported; root can move during shrink |
@@ -228,16 +227,11 @@ reordered device caches, or storage that lies about fsync completion. Corrupt
 recovery data causes a stop. A hostile user who can change both the image and
 journal is outside the integrity model.
 
-The Linux-driver suite passed in a VM with ten seeds and 5,000 real file-workload
-iterations per seed. It checked grow, shrink, content, metadata, target geometry,
-fsck, read-only mounts, and use of added capacity. This result covers one kernel,
-512-byte sectors, 4096-byte clusters, and 32–96 MiB filesystems. See
-[qualification](qualification.md) for the source identity and reached counts.
-This result does not prove physical power-loss resistance or satisfy other
-open release criteria.
-
-The larger-image campaign uses 128 MiB sources and targets of 80 or 192 MiB; it
-samples 160 reached fault scenarios and does not represent hardware testing. Direct
-devices remain disabled. Broad vendor-layout, very-large-image, storage-exhaustion,
-and hardware qualification remain open. See the current qualification record;
-do not use an older PASS after a relevant code change.
+The Linux-driver suite checks grow, shrink, content, metadata, target geometry,
+fsck, read-only mounts, and use of added capacity. The larger-image campaign
+uses 128 MiB sources and targets of 80 or 192 MiB; it samples reached fault
+scenarios and does not represent hardware testing. Direct devices remain
+disabled. Broad vendor-layout, very-large-image, storage-exhaustion, and
+hardware qualification remain open. See [qualification](qualification.md) for
+the commands and generated test reports. Do not use a PASS from an older source
+revision after a relevant code change.

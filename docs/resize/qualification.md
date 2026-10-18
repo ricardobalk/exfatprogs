@@ -1,4 +1,9 @@
-# Qualification record
+# Qualification tests
+
+Generated test results do not belong in the source repository. Each runner
+writes its report, logs, traces, and retained failure fixtures to the directory
+selected with `--output`. `resize/evidence/` is ignored and is a convenient
+local destination. GitHub Actions uses a runner-temporary directory instead.
 
 ## Reproduce the checks
 
@@ -8,8 +13,13 @@ new. A test runner rejects an existing output directory.
 ```sh
 make -C lib check
 python3 resize/tests/regressions.py --output resize/evidence/upstream
+python3 resize/tests/cancel_commit.py --output resize/evidence/compound-cancel
 python3 resize/tests/run.py --seeds 1000 --iterations 5000 --jobs 3 --faults \
     --output resize/evidence/images
+python3 resize/tests/container.py --output resize/evidence/containers
+python3 resize/tests/nofat.py --output resize/evidence/inactive-fat
+python3 resize/tests/signals.py --output resize/evidence/signals
+python3 resize/tests/large_faults.py --output resize/evidence/large-faults
 python3 resize/tests/run.py --sanitize --library-only \
     --output resize/evidence/c-sanitizers
 python3 resize/tests/regressions.py --sanitize \
@@ -33,175 +43,71 @@ accept it. It also checks that a repaired upcase allocation has a valid FAT
 chain. The baseline repair lacks that chain. The fixed repair passes the
 independent reader after orphan rescue.
 
-The native driver check needs a machine with loop devices, the Linux
-exFAT driver, root, and CAP_SYS_ADMIN. It creates only private images and detaches
+The native driver check needs a machine with loop devices, the Linux exFAT
+driver, root, and CAP_SYS_ADMIN. It creates only private images and detaches
 only loop devices returned for those images:
 
 ```sh
 sudo python3 resize/tests/driver.py --require --seeds 10 --iterations 5000 \
-    --output resize/evidence/vm-driver
+    --output resize/evidence/driver
 ```
 
 Without `--require`, missing capabilities produce exit 77 and NOT_RUN. The
-GitHub Actions driver job uses `--require`. The workflow file is
-`.github/workflows/resize.yml`. No Actions run was started from this local task.
+GitHub Actions driver job uses `--require`.
 
-## Evidence layout
+## Test output
 
-Each model case has a seed, workload count, sector and cluster size, compact-FAT
-choice, measured allocation/tail placement, six resize checks, capacity probe,
-write counts, and final image hash. Workload iterations are dictionary operations.
-The final model state is serialized into a real image. They are not 5,000 Linux
-file calls on the image. The independent logical model includes zero bytes after
-ValidDataLength where a fixture tests partial initialization.
+`results.json` is the machine-readable test report. The main runner records
+each outcome, source hashes, compiler, Python version, platform, source commit,
+parameters, and elapsed time. The focused runners add their case-specific
+results. `actions.jsonl` records operation paths and generated-data hashes.
+Fault traces contain actual reached I/O positions and injected modes. They
+contain no copied file contents.
 
-`results.json` records each test outcome, code hashes, compiler, Python version,
-platform, base commit, parameters, and elapsed time. `actions.jsonl` records
-operation/path and generated-data hashes. The seed and pinned runner reproduce
-the remaining deterministic choices. Fault traces contain actual reached I/O
-positions and injected modes. They contain no copied file contents.
+Each model case records its seed, workload count, sector and cluster size,
+compact-FAT choice, measured allocation and tail placement, resize checks,
+capacity probe, write counts, and final image hash. Workload iterations are
+dictionary operations. The final model state is serialized into a real image;
+these iterations are not Linux file calls on the image.
 
 Successful model images are removed to limit storage use. Failing synthetic
 images and journals remain in their case directory. Checker counterexample
 images remain available. No automatic reducer is implemented. A failed seed is
 a reproducible starting point; reduction is open work.
 
-## Current status
+## GitHub Actions artifacts
 
-The evidence summary is in `evidence-summary.json`. Its manifests identify the
-implementation under test for each campaign. Earlier FAIL or preliminary PASS
-results do not replace the final results.
+`.github/workflows/resize.yml` uploads test output with `if: always()`, so a
+failed campaign retains the reports and synthetic failure fixtures that were
+created before the failure. The artifacts are:
 
-The model and fault campaign used implementation commit `21b1ee5` and test commit
-`d0930b7`. The VM driver run used clean source commit
-`ca49e427cf0a8a5115c1a57aaf2a906041310aa6`. That commit adds documentation and
-does not change executable code. The source hashes for the earlier campaign
-are in `evidence-summary.json`. The VM source and binary hashes are in
-`evidence/driver.json`.
+- `resize-image-test-output` for image, fault, signal, and checker tests;
+- `resize-sanitizer-test-output` for native and checker sanitizer tests;
+- `resize-driver-test-output` for the manual privileged driver job.
 
-| Check | Recorded result |
-| --- | --- |
-| External model | PASS: seeds 0–999, 5,000 iterations each; 5,000,000 dictionary operations |
-| Real image resize | PASS: six resizes per model seed; seven sector/cluster geometries |
-| Small-fixture faults | PASS: 1,016 reached injections; two additional journal-integrity groups |
-| Larger-image faults | PASS: 160 reached sampled scenarios on 128 MiB sources |
-| Native suites | PASS: ten C suites and eleven Python unit tests; C suites also passed ASan, UBSan, and LeakSanitizer |
-| Existing fsck regressions | PASS: 24 cases normally and the same 24 with sanitizers |
-| Existing library suites | PASS: two suites |
-| Checker counterexamples | PASS: both exact-baseline failures reproduced and fixed |
-| Other regressions | PASS: four inactive-FAT cases, three container controls, three combined-failure records, three actual-signal cases |
-| Source distribution | PASS: make dist; all resize sources, tests, and committed evidence included; raw journals and temporary images excluded |
-| Clean build and install | PASS: default and opt-in out-of-tree builds; make check; install; four installed-CLI resizes with capacity probe |
-| Leak detector health | PASS: deliberate leak detected with expected exit 23 |
-| Linux driver | PASS in one VM: seeds 0–9, 5,000 real file-workload iterations each; ten grows and ten shrinks |
-| VM build and regressions | PASS: requested build options, make check, two library suites, ten C suites, eleven Python unit tests, and 24 fsck cases |
-| GitHub Actions | NOT_RUN: workflow supplied; no push or remote execution |
-| Physical power loss | NOT_QUALIFIED: no persistent cache/write-order model |
-
-The main report has 2,030 records. A host-unit record contains eleven Python
-unit tests. The sanitizer report repeats the native suites; do not add those
-runs to the number of unique suites. Negative controls deliberately run the old
-code and require its recorded failure. They are not failures of the final code.
-
-Committed compact reports are in `docs/resize/evidence/`. The complete main
-per-case report is `model-and-fault-cases.jsonl`. The raw main report, action
-logs, and reached traces were retained in `resize/evidence/verified-final/` in
-the original environment. Additional
-final runs use the `final-*` paths named in the summary. Raw images and journals
-are not embedded in the Git patch. The earlier raw directories are not present
-in this VM checkout. Failed and preliminary runs have no final PASS status.
-
-The earlier container could not run the driver suite. Its NOT_RUN record is
-retained in `evidence/driver-not-run.json`. The VM run below supplies the driver
-result. Earlier raw paths refer to the original qualification environment.
-The new raw VM evidence is in `resize/evidence/vm-driver/` and
-`resize/evidence/vm-environment/` in this checkout.
+Push and pull-request runs use 28 model seeds. Scheduled runs and manual runs
+with `full` selected use 1,000 seeds. The privileged driver job runs only when a
+manual workflow dispatch selects `driver`. Artifacts are retained for seven
+days. A result applies only to the exact source revision identified by its
+workflow run and generated report; an older PASS does not qualify changed code.
 
 Physical power-loss qualification, a persistent cache/write-order model, broad
-vendor/GUID combinations, and very large real images remain open. No production or direct-device release is approved.
+vendor/GUID combinations, and very large real images remain open. No production
+or direct-device release is approved.
 
-## Linux-driver qualification in a VM
+## Regression origins
 
-The specified command passed on 2026-10-18 with exit zero. The runner was not
-changed. The source tree was clean before the run. All 175 recorded input-file
-hashes remained equal after the run. No executable changes were required.
-
-The VM runs Debian 13 with kernel `6.18.51-1.qubes.fc41.x86_64`. Passwordless
-sudo supplied uid zero and CAP_SYS_ADMIN. Effective capabilities were
-`000001ffffffffff`. The Linux exFAT module loaded successfully. A free loop
-device was available. No loop devices were attached before or after the run.
-The build used GCC 14.2.0 and Python 3.13.5. Exact package versions, build
-commands, configuration hashes, and binary hashes are in `evidence/driver.json`.
-
-Each seed started with a new 64 MiB image. The filesystem used 512-byte sectors
-and 4096-byte clusters. A 48 MiB temporary file placed workload allocations
-beyond the 32 MiB shrink target. Seeds with even numbers grew to 96 MiB and then
-shrank to 32 MiB. Seeds with odd numbers used the reverse order. The runner
-detached the image before each resize. It used only the loop device returned
-for that image. It did not change a partition table or use an existing volume.
-
-| Reached check | Count |
-| --- | --- |
-| Seeds with PASS | 10 |
-| Real Linux file-workload iterations | 50,000; 5,000 per seed |
-| Committed grow operations | 10 |
-| Committed shrink operations | 10; 42–55 allocated clusters moved per shrink |
-| Read-only mount and full-content comparisons after resize | 20 |
-| Source tail-placement checks | 10 |
-| Added-capacity probes | 10; each wrote and hashed 80 MiB |
-| Independent reader plus fsck checks | 50 |
-| Host preflight and final fsck checks | 40 |
-
-The workload creates, appends, overwrites, truncates, renames, and deletes files.
-It uses a stat operation when a rename has no source. Each iteration performs
-a real Linux file operation. The counts are workload iterations, not measured
-syscall counts or physical writes. The ten action logs each contain 5,000 rows.
-
-After each resize, the reader compared content and metadata with the source
-snapshot. It checked the target length, both boot regions, FAT chains, allocation
-bitmap, and ownership. Each read-only mount repeated the namespace and content
-comparison through the Linux driver. After each grow, an 80 MiB file had to pass
-a content hash check and own clusters beyond the old filesystem length. The
-file was then deleted. The runner took a new metadata snapshot after this real
-directory change.
-
-Reached counts come from the completed PASS paths in the unchanged runner and
-the saved action logs and resize records. They are not a separate syscall trace.
-The complete raw driver report is `resize/evidence/vm-driver/results.json`.
-Its committed copy and provenance are in `evidence/driver.json`. The provenance
-includes the source commit, all source hashes, binary hashes, toolchain,
-parameters, elapsed time, preflight, action-log hashes, and cleanup result.
-The elapsed driver time was 38.89 seconds.
-
-No test failed. There are no failed image or journal artifacts from this run.
-Successful images were removed by the existing runner. Action logs, stdout,
-stderr, setup logs, and build logs remain in the raw evidence directories.
-An initial dependency fetch failed without the existing proxy settings. The
-installation then passed with those settings. Both setup logs were retained.
-
-The VM also passed `make check`, `make -C lib check`, and all 24 existing fsck
-regressions. See `evidence/vm-verification.json`, `evidence/vm-native.json`, and
-`evidence/vm-upstream.json`. These runs repeat existing suites. Do not add them
-to the earlier unique-suite counts. No sanitizer campaign was repeated in the VM.
-
-This PASS covers the specified suite on one VM kernel and one sector/cluster
-geometry. It does not prove physical power-loss resistance. It does not close
-the other release criteria or approve direct-device or production use.
-
-## Failures found during development
-
-The retained baseline checker failed on a legal fragmented upcase chain. A
-second counterexample found missing FAT links in a newly repaired upcase stream.
-Both have executable before/after checks in `fsck_regression.py`.
+The baseline checker rejects a legal fragmented upcase chain. A second
+counterexample exposes missing FAT links in a newly repaired upcase stream.
+`fsck_regression.py` keeps executable before/after checks for both cases.
 
 Test-fixture corrections were also required. A capacity probe initially left an
 end marker before a new root cluster; seed 13 exposed the lost owner. A dense
 fixture requested a contiguous run that did not exist; it now uses a FAT chain.
 A too-small-target assertion used 1 MiB, which is valid on a compact layout; it
 now uses 512 KiB. A compact 4096-byte-sector fixture requested 512-byte alignment;
-it now uses one filesystem sector. These were test construction faults. They
-are not counted as resize-engine defects. The failed runs were superseded by a
-full rerun on the corrected tests.
+it now uses one filesystem sector. These are test construction regressions, not
+resize-engine data-loss cases.
 
 ## Repeat one model seed or the fault sweep
 

@@ -62,24 +62,13 @@ exfatprogs checker do not call those primitives. The fixture serializer imports
 some reader helpers for base geometry and checksums. This shared test code is
 explicit. It limits the independence of fixture construction from the Python
 reader. The separate C checker and external logical-byte model supply additional
-checks. Linux-driver tests are also required for release. The specified driver
-suite passed in a VM; see [qualification](qualification.md) for its scope. Other
-release criteria remain open.
+checks. Linux-driver tests are also required for release; see
+[qualification](qualification.md) for the procedure. Other release criteria
+remain open.
 
-## Cloud setup
+## CI setup
 
-The earlier cloud task saved its install script and task-start instructions as
-an environment configuration draft. The install script ran successfully there.
-No service needs startup. The script enables experimental resize and builds
-the existing checkout. It can use the verified Debian tools retained under
-`/workspace/toolchain` in that environment.
-
-That cloud system root was read-only. Its local setup extracted signed Debian
-packages into a private writable toolchain. The package index signatures were
-checked with the Debian archive keyring. No signature check was disabled. The
-later VM qualification used the normal Debian package command in the guide.
-
-The configuration draft has not been published. Review and save the draft in
-the environment settings, then publish it to activate it. Restoration of these
-unpublished local Git commits in a new cloud task has not been verified. Keep
-the review patch or Git bundle outside a disposable task if it must survive.
+The resize workflow installs the Debian build and test dependencies, enables
+experimental resize, and builds the checked-out revision. It writes generated
+reports and failure fixtures outside the source tree and uploads them as job
+artifacts. No service needs startup.
